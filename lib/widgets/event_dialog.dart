@@ -99,7 +99,11 @@ class _EventDialogState extends State<EventDialog> {
                     const SizedBox(height: 10),
                     Text(
                       widget.event.educationalTip ?? "",
-                      style: GoogleFonts.getFont('Press Start 2P', fontSize: 8),
+                      style: GoogleFonts.getFont(
+                        'Press Start 2P',
+                        fontSize: 8,
+                        color: Colors.white,
+                      ),
                     ),
                   ],
                 ),

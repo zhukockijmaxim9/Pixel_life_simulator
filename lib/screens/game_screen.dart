@@ -4,8 +4,15 @@ import '../app_state.dart';
 import '../widgets/pixel_progress_bar.dart';
 import '../widgets/event_dialog.dart';
 
-class GameScreen extends StatelessWidget {
+class GameScreen extends StatefulWidget {
   const GameScreen({super.key});
+
+  @override
+  State<GameScreen> createState() => _GameScreenState();
+}
+
+class _GameScreenState extends State<GameScreen> {
+  bool _isDialogShowing = false;
 
   Color _getCharacterColor(double mood) {
     if (mood > 80) return Colors.greenAccent;
@@ -14,7 +21,8 @@ class GameScreen extends StatelessWidget {
   }
 
   void _showEventIfNeeded(BuildContext context, GameState state) {
-    if (state.currentEvent != null) {
+    if (state.currentEvent != null && !_isDialogShowing) {
+      _isDialogShowing = true;
       WidgetsBinding.instance.addPostFrameCallback((_) {
         showDialog(
           context: context,
@@ -23,10 +31,14 @@ class GameScreen extends StatelessWidget {
             event: state.currentEvent!,
             onResolve: (accepted, {quizAnswerIndex}) {
               state.resolveEvent(accepted, quizAnswerIndex: quizAnswerIndex);
+              _isDialogShowing = false;
               Navigator.of(context).pop();
             },
           ),
-        );
+        ).then((_) {
+          // In case it's closed elsewhere
+          _isDialogShowing = false;
+        });
       });
     }
   }
@@ -68,7 +80,10 @@ class GameScreen extends StatelessWidget {
                       ),
                       Text(
                         'ДЕНЬ ${state.currentDay} / 30',
-                        style: const TextStyle(fontSize: 10),
+                        style: const TextStyle(
+                          fontSize: 10,
+                          color: Colors.white,
+                        ),
                       ),
                       IconButton(
                         onPressed: () => Navigator.pushNamed(context, '/shop'),
@@ -89,7 +104,7 @@ class GameScreen extends StatelessWidget {
                   const SizedBox(height: 20),
                   Text(
                     state.selectedJob?.title ?? 'БЕЗРАБОТНЫЙ',
-                    style: const TextStyle(fontSize: 14),
+                    style: const TextStyle(fontSize: 14, color: Colors.white),
                   ),
                   if (state.selectedGoal != null)
                     Padding(

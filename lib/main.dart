@@ -29,7 +29,11 @@ class PixelPurseApp extends StatelessWidget {
       theme: ThemeData(
         brightness: Brightness.dark,
         scaffoldBackgroundColor: const Color(0xFF121212),
-        textTheme: GoogleFonts.getTextTheme('Press Start 2P'),
+        primaryColor: Colors.cyanAccent,
+        textTheme: GoogleFonts.getTextTheme(
+          'Press Start 2P',
+          ThemeData.dark().textTheme,
+        ),
         elevatedButtonTheme: ElevatedButtonThemeData(
           style: ElevatedButton.styleFrom(
             backgroundColor: Colors.cyanAccent,
@@ -41,7 +45,7 @@ class PixelPurseApp extends StatelessWidget {
             side: const BorderSide(color: Colors.white, width: 2),
             textStyle: GoogleFonts.getFont(
               'Press Start 2P',
-              fontSize: 14,
+              fontSize: 12,
               fontWeight: FontWeight.bold,
             ),
           ),

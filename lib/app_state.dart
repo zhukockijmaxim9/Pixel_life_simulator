@@ -75,6 +75,16 @@ class GameState with ChangeNotifier {
   bool get isWin => _isWin;
   List<MerchItem> get inventory => List.unmodifiable(_inventory);
 
+  void setJob(Job job) {
+    _selectedJob = job;
+    notifyListeners();
+  }
+
+  void setGoal(GameGoal goal) {
+    _selectedGoal = goal;
+    notifyListeners();
+  }
+
   static final List<Job> availableJobs = [
     const Job(title: 'Курьер', salary: 35000, icon: '🚲'),
     const Job(title: 'Официант', salary: 45000, icon: '☕'),
