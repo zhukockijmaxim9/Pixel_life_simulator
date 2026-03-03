@@ -7,6 +7,8 @@ import 'screens/game_screen.dart';
 import 'screens/planning_screen.dart';
 import 'screens/shop_screen.dart';
 
+import 'screens/summary_screen.dart';
+
 void main() {
   runApp(
     MultiProvider(
@@ -51,6 +53,7 @@ class PixelPurseApp extends StatelessWidget {
         '/game': (context) => const GameScreen(),
         '/planning': (context) => const PlanningScreen(),
         '/shop': (context) => const ShopScreen(),
+        '/summary': (context) => const SummaryScreen(),
       },
     );
   }

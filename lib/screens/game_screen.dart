@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../app_state.dart';
 import '../widgets/pixel_progress_bar.dart';
+import '../widgets/event_dialog.dart';
 
 class GameScreen extends StatelessWidget {
   const GameScreen({super.key});
@@ -12,12 +13,43 @@ class GameScreen extends StatelessWidget {
     return Colors.white;
   }
 
+  void _showEventIfNeeded(BuildContext context, GameState state) {
+    if (state.currentEvent != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        showDialog(
+          context: context,
+          barrierDismissible: false,
+          builder: (context) => EventDialog(
+            event: state.currentEvent!,
+            onResolve: (accepted, {quizAnswerIndex}) {
+              state.resolveEvent(accepted, quizAnswerIndex: quizAnswerIndex);
+              Navigator.of(context).pop();
+            },
+          ),
+        );
+      });
+    }
+  }
+
+  void _showGameOverIfNeeded(BuildContext context, GameState state) {
+    if (state.isGameOver) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        Navigator.of(
+          context,
+        ).pushNamedAndRemoveUntil('/summary', (route) => false);
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFF121212),
       body: Consumer<GameState>(
         builder: (context, state, child) {
+          _showEventIfNeeded(context, state);
+          _showGameOverIfNeeded(context, state);
+
           return SafeArea(
             child: Padding(
               padding: const EdgeInsets.all(20.0),
@@ -29,7 +61,10 @@ class GameScreen extends StatelessWidget {
                     children: [
                       Text(
                         '💰 ${state.money.toStringAsFixed(0)} ₽',
-                        style: const TextStyle(fontSize: 12),
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: Colors.yellowAccent,
+                        ),
                       ),
                       Text(
                         'ДЕНЬ ${state.currentDay} / 30',
@@ -56,6 +91,17 @@ class GameScreen extends StatelessWidget {
                     state.selectedJob?.title ?? 'БЕЗРАБОТНЫЙ',
                     style: const TextStyle(fontSize: 14),
                   ),
+                  if (state.selectedGoal != null)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 10),
+                      child: Text(
+                        'ЦЕЛЬ: ${state.selectedGoal!.title}',
+                        style: const TextStyle(
+                          fontSize: 8,
+                          color: Colors.cyanAccent,
+                        ),
+                      ),
+                    ),
                   const Spacer(),
                   // Progress Bars
                   PixelProgressBar(value: state.mood, label: 'НАСТРОЕНИЕ'),
@@ -67,7 +113,9 @@ class GameScreen extends StatelessWidget {
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.orangeAccent,
                       ),
-                      onPressed: () => state.nextTurn(3),
+                      onPressed: state.currentEvent == null && !state.isGameOver
+                          ? () => state.nextTurn(3)
+                          : null,
                       child: const Text('РАБОТАТЬ (+3 ДНЯ)'),
                     ),
                   ),
