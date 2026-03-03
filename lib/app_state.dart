@@ -68,7 +68,13 @@ class Lifestyle {
   });
 }
 
+enum MealType { economy, standard, luxury, skip }
+
 class GameState with ChangeNotifier {
+  static const double SALARY = 45000;
+  static const double RENT = 18000;
+  static const double MONTHLY_GOAL = 8000;
+
   static const List<Lifestyle> lifestyles = [
     Lifestyle(
       name: 'Эконом',
@@ -100,6 +106,10 @@ class GameState with ChangeNotifier {
   int _currentMonth = 1;
   int _gamePoints = 0;
 
+  int _daysSinceLastMeal = 0;
+  int _mealThreshold = Random().nextInt(3) + 2; // Every 2-4 days
+  bool _needsMeal = false;
+
   Job? _selectedJob;
   GameGoal? _selectedGoal;
   GameEvent? _currentEvent;
@@ -127,6 +137,7 @@ class GameState with ChangeNotifier {
   bool get isGameOver => _isGameOver;
   bool get isWin => _isWin;
   bool get isPlanningPhase => _isPlanningPhase;
+  bool get needsMeal => _needsMeal;
   List<MerchItem> get inventory => List.unmodifiable(_inventory);
 
   void setJob(Job job) {
@@ -216,7 +227,7 @@ class GameState with ChangeNotifier {
       type: EventType.quiz,
       options: [
         'Увеличивает их стоимость',
-        'Снижает их покупательную способность',
+        'Снижает их покупательскую способность',
         'Никак не влияет',
         'Делает цены ниже',
       ],
@@ -231,13 +242,15 @@ class GameState with ChangeNotifier {
     _selectedGoal = goal;
     _currentDay = 1;
     _currentMonth = 1;
-    _walletBalance = 0;
+    _walletBalance = SALARY - RENT - MONTHLY_GOAL;
     _emergencyFund = 0;
-    _savingsGoal = 0;
+    _savingsGoal = MONTHLY_GOAL;
     _mood = 80;
     _isGameOver = false;
     _isWin = false;
-    _isPlanningPhase = true;
+    _isPlanningPhase = false;
+    _daysSinceLastMeal = 0;
+    _mealThreshold = Random().nextInt(3) + 2;
     _eventHistory.clear();
     notifyListeners();
   }
@@ -248,9 +261,12 @@ class GameState with ChangeNotifier {
     }
     _currentDay = 1;
     _currentMonth++;
-    _isPlanningPhase = true;
+    _walletBalance += (SALARY - RENT - MONTHLY_GOAL);
+    _savingsGoal += MONTHLY_GOAL;
+    _isPlanningPhase = false;
     _isGameOver = false;
     _isWin = false;
+    _daysSinceLastMeal = 0;
     notifyListeners();
   }
 
@@ -271,21 +287,79 @@ class GameState with ChangeNotifier {
   }
 
   void nextTurn() {
-    if (_isGameOver || _isPlanningPhase) return;
+    if (_isGameOver || _isPlanningPhase || _needsMeal) return;
 
-    // Advanced time: 1-5 random days
-    int daysToAdd = Random().nextInt(5) + 1;
-    _currentDay += daysToAdd;
+    if (_daysSinceLastMeal >= _mealThreshold) {
+      _needsMeal = true;
+      notifyListeners();
+      return;
+    }
 
-    if (_currentDay >= 30) {
-      _currentDay = 30;
-      _checkGameOver();
-    } else {
-      // Chance of event 70%
-      if (Random().nextDouble() < 0.7) {
-        _triggerRandomEvent();
+    int daysToAdd = Random().nextInt(4) + 1;
+    _processTurn(daysToAdd);
+  }
+
+  void _processTurn(int days) {
+    for (int i = 0; i < days; i++) {
+      _currentDay++;
+      _daysSinceLastMeal++;
+
+      if (_currentDay > 30) {
+        _currentDay = 30;
+        _checkGameOver();
+        break;
+      }
+
+      // Mood debuffs
+      if (_mood < 40 && Random().nextDouble() < 0.2) {
+        _applyFinancialImpact(-1000); // Fatigue Error
+      }
+      if (_mood <= 0) {
+        _applyFinancialImpact(-4000); // Nervous Breakdown
+        _mood = 40;
+      }
+
+      // Check if hunger is triggered during multi-day skip
+      if (_daysSinceLastMeal >= _mealThreshold) {
+        _needsMeal = true;
+        break;
       }
     }
+
+    // Try random event if not eating
+    if (!_needsMeal && !_isGameOver && Random().nextDouble() < 0.3) {
+      _triggerRandomEvent();
+    }
+
+    _validateStats();
+    notifyListeners();
+  }
+
+  void chooseMeal(MealType type) {
+    _needsMeal = false;
+    _daysSinceLastMeal = 0;
+    _mealThreshold = Random().nextInt(3) + 2;
+
+    switch (type) {
+      case MealType.economy:
+        _applyFinancialImpact(-600);
+        _mood -= 10;
+        break;
+      case MealType.standard:
+        _applyFinancialImpact(-1500);
+        _mood += 2;
+        break;
+      case MealType.luxury:
+        _applyFinancialImpact(-3500);
+        _mood += 15;
+        break;
+      case MealType.skip:
+        _mood -= 25;
+        _applyFinancialImpact(-2000); // Treatment
+        break;
+    }
+
+    _validateStats();
     notifyListeners();
   }
 
@@ -310,11 +384,13 @@ class GameState with ChangeNotifier {
   }
 
   void _checkGameOver() {
-    _isGameOver = true;
-    if (_selectedGoal != null && _savingsGoal >= _selectedGoal!.cost) {
-      _isWin = true;
-    } else {
+    // Total goal check
+    if (_walletBalance + _savingsGoal < MONTHLY_GOAL * _currentMonth) {
+      _isGameOver = true;
       _isWin = false;
+    } else {
+      _isGameOver = true;
+      _isWin = true;
     }
   }
 
@@ -370,7 +446,7 @@ class GameState with ChangeNotifier {
       _walletBalance = 0;
     }
 
-    // Priority 3: Savings
+    // Priority 3: Savings (allowed for mandatory/debuffs)
     if (_savingsGoal >= cost) {
       _savingsGoal -= cost;
       return;
@@ -381,14 +457,9 @@ class GameState with ChangeNotifier {
 
     // If still cost > 0, Financial Crash!
     if (cost > 0) {
-      _triggerFinancialCrash();
+      _isGameOver = true;
+      _isWin = false;
     }
-  }
-
-  void _triggerFinancialCrash() {
-    _isGameOver = true;
-    _isWin = false;
-    // Maybe set a specific reason for game over later
   }
 
   void resolveEvent(bool accepted, {int? quizAnswerIndex}) {

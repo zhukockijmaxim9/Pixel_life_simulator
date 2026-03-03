@@ -50,34 +50,38 @@ class SummaryScreen extends StatelessWidget {
                   _buildStatRow('МЕРЧ', '${state.inventory.length} шт.'),
                   _buildStatRow('БАЛЛЫ', '${state.gamePoints}'),
                   const SizedBox(height: 40),
-                  if (state.isWin)
-                    const Text(
-                      'ВЫ ДОСТИГЛИ СВОЕЙ ЦЕЛИ!',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(fontSize: 10, color: Colors.cyanAccent),
-                    )
-                  else
-                    const Text(
-                      'ПОПРОБУЙТЕ ЕЩЕ РАЗ В СЛЕДУЮЩЕМ МЕСЯЦЕ',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(fontSize: 10, color: Colors.grey),
+                  Text(
+                    state.isWin
+                        ? 'ВЫ НАКОПИЛИ 8000₽ И ВЫПОЛНИЛИ ЦЕЛЬ!'
+                        : 'ВАМ НЕ ХВАТИЛО ДЕНЕГ ДЛЯ ЦЕЛИ МЕСЯЦА...',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 10,
+                      color: state.isWin ? Colors.cyanAccent : Colors.redAccent,
                     ),
+                  ),
                   const Spacer(),
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton(
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.cyanAccent,
+                        backgroundColor: state.isWin
+                            ? Colors.cyanAccent
+                            : Colors.grey,
                       ),
-                      onPressed: () {
-                        state.startNewMonth();
-                        Navigator.pushNamedAndRemoveUntil(
-                          context,
-                          '/planning',
-                          (route) => false,
-                        );
-                      },
-                      child: const Text('НАЧАТЬ НОВЫЙ МЕСЯЦ'),
+                      onPressed: state.isWin
+                          ? () {
+                              state.startNewMonth();
+                              Navigator.pushNamedAndRemoveUntil(
+                                context,
+                                '/game',
+                                (route) => false,
+                              );
+                            }
+                          : null,
+                      child: Text(
+                        state.isWin ? 'СЛЕДУЮЩИЙ МЕСЯЦ' : 'ЦЕЛЬ НЕ ДОСТИГНУТА',
+                      ),
                     ),
                   ),
                   const SizedBox(height: 16),
