@@ -49,15 +49,44 @@ class SummaryScreen extends StatelessWidget {
                   _buildStatRow('НАСТРОЕНИЕ', '${state.mood.toInt()}%'),
                   _buildStatRow('МЕРЧ', '${state.inventory.length} шт.'),
                   _buildStatRow('БАЛЛЫ', '${state.gamePoints}'),
+                  const SizedBox(height: 20),
+                  Text(
+                    state.isWin ? 'ПОБЕДА!' : 'ПОРАЖЕНИЕ...',
+                    style: GoogleFonts.getFont(
+                      'Press Start 2P',
+                      fontSize: 24,
+                      color: state.isWin
+                          ? Colors.greenAccent
+                          : Colors.redAccent,
+                    ),
+                  ),
+                  const SizedBox(height: 40),
+                  // Pixel Character representation
+                  Icon(
+                    state.isWin
+                        ? Icons.sentiment_very_satisfied
+                        : Icons.sentiment_very_dissatisfied,
+                    size: 120,
+                    color: state.isWin ? Colors.greenAccent : Colors.redAccent,
+                  ),
                   const SizedBox(height: 40),
                   Text(
                     state.isWin
                         ? 'ВЫ НАКОПИЛИ 8000₽ И ВЫПОЛНИЛИ ЦЕЛЬ!'
-                        : 'ВАМ НЕ ХВАТИЛО ДЕНЕГ ДЛЯ ЦЕЛИ МЕСЯЦА...',
+                        : 'ВАМ НЕ ХВАТИЛО ДЕНЕГ ДО ЦЕЛИ В 8000₽.',
                     textAlign: TextAlign.center,
-                    style: TextStyle(
+                    style: GoogleFonts.getFont(
+                      'Press Start 2P',
                       fontSize: 10,
-                      color: state.isWin ? Colors.cyanAccent : Colors.redAccent,
+                      color: Colors.white,
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  Text(
+                    'БАЛАНС: ${state.totalMoney.toStringAsFixed(0)} ₽',
+                    style: const TextStyle(
+                      fontSize: 16,
+                      color: Colors.yellowAccent,
                     ),
                   ),
                   const Spacer(),
@@ -65,26 +94,26 @@ class SummaryScreen extends StatelessWidget {
                     width: double.infinity,
                     child: ElevatedButton(
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: state.isWin
-                            ? Colors.cyanAccent
-                            : Colors.grey,
+                        backgroundColor: Colors.cyanAccent,
+                        foregroundColor: Colors.black,
                       ),
-                      onPressed: state.isWin
-                          ? () {
-                              state.startNewMonth();
-                              Navigator.pushNamedAndRemoveUntil(
-                                context,
-                                '/game',
-                                (route) => false,
-                              );
-                            }
-                          : null,
+                      onPressed: () {
+                        // For a clean restart, we should ideally go back to planning or reset state
+                        // The user asked for "Try again", so we reset to a new month or planning
+                        if (state.isWin) {
+                          state.startNewMonth();
+                          Navigator.pushReplacementNamed(context, '/game');
+                        } else {
+                          // Reset completely
+                          Navigator.pushReplacementNamed(context, '/');
+                        }
+                      },
                       child: Text(
-                        state.isWin ? 'СЛЕДУЮЩИЙ МЕСЯЦ' : 'ЦЕЛЬ НЕ ДОСТИГНУТА',
+                        state.isWin ? 'СЛЕДУЮЩИЙ МЕСЯЦ' : 'ПОПРОБОВАТЬ СНОВА',
                       ),
                     ),
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 20),
                   TextButton(
                     onPressed: () => Navigator.pushNamedAndRemoveUntil(
                       context,

@@ -1,4 +1,5 @@
 import 'dart:math';
+import 'dart:async';
 import 'package:flutter/material.dart';
 
 enum EventType { random, voluntary, quiz }
@@ -75,6 +76,10 @@ class GameState with ChangeNotifier {
   int _mealThreshold = Random().nextInt(3) + 2; // Every 2-4 days
   bool _needsMeal = false;
 
+  final StreamController<String> _notificationController =
+      StreamController<String>.broadcast();
+  Stream<String> get notifications => _notificationController.stream;
+
   Job? _selectedJob;
   GameGoal? _selectedGoal;
   GameEvent? _currentEvent;
@@ -103,6 +108,7 @@ class GameState with ChangeNotifier {
   bool get isWin => _isWin;
   bool get isPlanningPhase => _isPlanningPhase;
   bool get needsMeal => _needsMeal;
+  int get daysToHunger => _mealThreshold - _daysSinceLastMeal;
   List<MerchItem> get inventory => List.unmodifiable(_inventory);
 
   void setJob(Job job) {
@@ -235,7 +241,7 @@ class GameState with ChangeNotifier {
     notifyListeners();
   }
 
-  void nextTurn() {
+  Future<void> nextTurn() async {
     if (_isGameOver || _isPlanningPhase || _needsMeal) return;
 
     if (_daysSinceLastMeal >= _mealThreshold) {
@@ -245,43 +251,47 @@ class GameState with ChangeNotifier {
     }
 
     int daysToAdd = Random().nextInt(4) + 1;
-    _processTurn(daysToAdd);
-  }
-
-  void _processTurn(int days) {
-    for (int i = 0; i < days; i++) {
-      _currentDay++;
-      _daysSinceLastMeal++;
-
-      if (_currentDay > 30) {
-        _currentDay = 30;
-        _checkGameOver();
-        break;
-      }
-
-      // Mood debuffs
-      if (_mood < 40 && Random().nextDouble() < 0.2) {
-        _applyFinancialImpact(-1000); // Fatigue Error
-      }
-      if (_mood <= 0) {
-        _applyFinancialImpact(-4000); // Nervous Breakdown
-        _mood = 40;
-      }
-
-      // Check if hunger is triggered during multi-day skip
-      if (_daysSinceLastMeal >= _mealThreshold) {
-        _needsMeal = true;
-        break;
-      }
+    for (int i = 0; i < daysToAdd; i++) {
+      if (_isGameOver || _needsMeal) break;
+      _processSingleDay();
+      notifyListeners();
+      await Future.delayed(const Duration(milliseconds: 400));
     }
 
-    // Try random event if not eating
+    // Try random event if not eating and month not ended
     if (!_needsMeal && !_isGameOver && Random().nextDouble() < 0.3) {
       _triggerRandomEvent();
+      notifyListeners();
+    }
+  }
+
+  void _processSingleDay() {
+    _currentDay++;
+    _daysSinceLastMeal++;
+
+    if (_currentDay > 30) {
+      _currentDay = 30;
+      _checkGameOver();
+      return;
+    }
+
+    // Mood debuffs
+    if (_mood < 40 && Random().nextDouble() < 0.2) {
+      _applyFinancialImpact(-1000); // Fatigue Error
+      _notificationController.add('Ошибка от усталости: -1000₽');
+    }
+    if (_mood <= 0) {
+      _applyFinancialImpact(-4000); // Nervous Breakdown
+      _notificationController.add('Нервный срыв: -4000₽');
+      _mood = 40;
+    }
+
+    // Check if hunger is triggered
+    if (_daysSinceLastMeal >= _mealThreshold) {
+      _needsMeal = true;
     }
 
     _validateStats();
-    notifyListeners();
   }
 
   void chooseMeal(MealType type) {
