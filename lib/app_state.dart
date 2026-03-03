@@ -54,47 +54,12 @@ class MerchItem {
   });
 }
 
-class Lifestyle {
-  final String name;
-  final double cost;
-  final double moodImpact;
-  final String description;
-
-  const Lifestyle({
-    required this.name,
-    required this.cost,
-    required this.moodImpact,
-    required this.description,
-  });
-}
-
 enum MealType { economy, standard, luxury, skip }
 
 class GameState with ChangeNotifier {
   static const double SALARY = 45000;
   static const double RENT = 18000;
   static const double MONTHLY_GOAL = 8000;
-
-  static const List<Lifestyle> lifestyles = [
-    Lifestyle(
-      name: 'Эконом',
-      cost: 5000,
-      moodImpact: -10,
-      description: 'Лапша и вода. Экономим на всем.',
-    ),
-    Lifestyle(
-      name: 'Стандарт',
-      cost: 12000,
-      moodImpact: 0,
-      description: 'Сбалансированное питание и комфорт.',
-    ),
-    Lifestyle(
-      name: 'Премиум',
-      cost: 25000,
-      moodImpact: 15,
-      description: 'Рестораны и деликатесы. Жизнь удалась!',
-    ),
-  ];
 
   // Financial accounts
   double _walletBalance = 0;
@@ -267,22 +232,6 @@ class GameState with ChangeNotifier {
     _isGameOver = false;
     _isWin = false;
     _daysSinceLastMeal = 0;
-    notifyListeners();
-  }
-
-  void distributeBudget({
-    required double toWallet,
-    required double toEmergency,
-    required double toSavings,
-    required double lifestyleCost,
-    required double moodImpact,
-  }) {
-    _walletBalance = toWallet;
-    _emergencyFund += toEmergency;
-    _savingsGoal += toSavings;
-    _mood += moodImpact;
-    _isPlanningPhase = false;
-    _validateStats();
     notifyListeners();
   }
 
