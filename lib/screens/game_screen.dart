@@ -3,7 +3,6 @@ import 'package:provider/provider.dart';
 import '../app_state.dart';
 import '../widgets/pixel_progress_bar.dart';
 import '../widgets/event_dialog.dart';
-import '../widgets/budget_dialog.dart';
 
 class GameScreen extends StatefulWidget {
   const GameScreen({super.key});
@@ -48,30 +47,7 @@ class _GameScreenState extends State<GameScreen> {
     if (state.isPlanningPhase && !_isPlanningShowing) {
       _isPlanningShowing = true;
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        showDialog(
-          context: context,
-          barrierDismissible: false,
-          builder: (context) => BudgetDialog(
-            totalToDistribute: state
-                .walletBalance, // In planning phase, all money is temporarily in wallet
-            onDistribute:
-                ({
-                  required toWallet,
-                  required toEmergency,
-                  required toSavings,
-                }) {
-                  state.distributeBudget(
-                    toWallet: toWallet,
-                    toEmergency: toEmergency,
-                    toSavings: toSavings,
-                  );
-                  _isPlanningShowing = false;
-                  Navigator.of(context).pop();
-                },
-          ),
-        ).then((_) {
-          _isPlanningShowing = false;
-        });
+        Navigator.pushReplacementNamed(context, '/planning');
       });
     }
   }

@@ -54,7 +54,42 @@ class MerchItem {
   });
 }
 
+class Lifestyle {
+  final String name;
+  final double cost;
+  final double moodImpact;
+  final String description;
+
+  const Lifestyle({
+    required this.name,
+    required this.cost,
+    required this.moodImpact,
+    required this.description,
+  });
+}
+
 class GameState with ChangeNotifier {
+  static const List<Lifestyle> lifestyles = [
+    Lifestyle(
+      name: 'Эконом',
+      cost: 5000,
+      moodImpact: -10,
+      description: 'Лапша и вода. Экономим на всем.',
+    ),
+    Lifestyle(
+      name: 'Стандарт',
+      cost: 12000,
+      moodImpact: 0,
+      description: 'Сбалансированное питание и комфорт.',
+    ),
+    Lifestyle(
+      name: 'Премиум',
+      cost: 25000,
+      moodImpact: 15,
+      description: 'Рестораны и деликатесы. Жизнь удалась!',
+    ),
+  ];
+
   // Financial accounts
   double _walletBalance = 0;
   double _emergencyFund = 0;
@@ -194,25 +229,13 @@ class GameState with ChangeNotifier {
     _currentEvent = null;
     _isPlanningPhase = true;
     _eventHistory.clear();
-
-    // Initial budget distribution setup (e.g. 1st salary)
-    _startMonthLogic(job.salary, 5000); // Assume 5000 basic expenses
     notifyListeners();
   }
 
-  void _startMonthLogic(double salary, double expenses) {
-    // 1. Deduct expenses from wallet (or other accounts if needed)
-    _walletBalance -= expenses;
-    // 2. Add salary to wallet for distribution
-    _walletBalance += salary;
-    // 3. Mark planning phase
-    _isPlanningPhase = true;
-  }
-
-  void startNewMonth(double salary, double expenses) {
+  void startNewMonth() {
     _currentDay = 1;
     _currentMonth++;
-    _startMonthLogic(salary, expenses);
+    _isPlanningPhase = true;
     notifyListeners();
   }
 
@@ -220,12 +243,15 @@ class GameState with ChangeNotifier {
     required double toWallet,
     required double toEmergency,
     required double toSavings,
+    required double lifestyleCost,
+    required double moodImpact,
   }) {
-    // We assume the player distributes what is in the wallet after startMonthLogic
     _walletBalance = toWallet;
     _emergencyFund += toEmergency;
     _savingsGoal += toSavings;
+    _mood += moodImpact;
     _isPlanningPhase = false;
+    _validateStats();
     notifyListeners();
   }
 

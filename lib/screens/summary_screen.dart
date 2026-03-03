@@ -70,13 +70,10 @@ class SummaryScreen extends StatelessWidget {
                         backgroundColor: Colors.cyanAccent,
                       ),
                       onPressed: () {
-                        state.startNewMonth(
-                          state.selectedJob?.salary ?? 35000,
-                          5000,
-                        );
+                        state.startNewMonth();
                         Navigator.pushNamedAndRemoveUntil(
                           context,
-                          '/game',
+                          '/planning',
                           (route) => false,
                         );
                       },
