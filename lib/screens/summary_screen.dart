@@ -30,9 +30,22 @@ class SummaryScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 40),
                   _buildStatRow(
-                    'ДЕНЬГИ',
-                    '${state.money.toStringAsFixed(0)} ₽',
+                    'ВСЕГО ДЕНЕГ',
+                    '${state.totalMoney.toStringAsFixed(0)} ₽',
                   ),
+                  _buildStatRow(
+                    ' - КОШЕЛЕК',
+                    '${state.walletBalance.toStringAsFixed(0)} ₽',
+                  ),
+                  _buildStatRow(
+                    ' - ПОДУШКА',
+                    '${state.emergencyFund.toStringAsFixed(0)} ₽',
+                  ),
+                  _buildStatRow(
+                    ' - КОПИЛКА',
+                    '${state.savingsGoal.toStringAsFixed(0)} ₽',
+                  ),
+                  const SizedBox(height: 10),
                   _buildStatRow('НАСТРОЕНИЕ', '${state.mood.toInt()}%'),
                   _buildStatRow('МЕРЧ', '${state.inventory.length} шт.'),
                   _buildStatRow('БАЛЛЫ', '${state.gamePoints}'),
@@ -57,7 +70,10 @@ class SummaryScreen extends StatelessWidget {
                         backgroundColor: Colors.cyanAccent,
                       ),
                       onPressed: () {
-                        state.startNewMonth();
+                        state.startNewMonth(
+                          state.selectedJob?.salary ?? 35000,
+                          5000,
+                        );
                         Navigator.pushNamedAndRemoveUntil(
                           context,
                           '/game',

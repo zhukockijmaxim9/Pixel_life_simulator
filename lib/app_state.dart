@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 enum EventType { random, voluntary, quiz }
 
 class GameEvent {
+  final String id;
   final String title;
   final String description;
   final EventType type;
@@ -14,6 +15,7 @@ class GameEvent {
   final String? educationalTip;
 
   const GameEvent({
+    required this.id,
     required this.title,
     required this.description,
     required this.type,
@@ -53,26 +55,43 @@ class MerchItem {
 }
 
 class GameState with ChangeNotifier {
-  double _money = 0;
+  // Financial accounts
+  double _walletBalance = 0;
+  double _emergencyFund = 0;
+  double _savingsGoal = 0;
+
   double _mood = 80;
   int _currentDay = 1;
+  int _currentMonth = 1;
   int _gamePoints = 0;
+
   Job? _selectedJob;
   GameGoal? _selectedGoal;
   GameEvent? _currentEvent;
+
   bool _isGameOver = false;
   bool _isWin = false;
-  final List<MerchItem> _inventory = [];
+  bool _isPlanningPhase = false;
 
-  double get money => _money;
+  final List<MerchItem> _inventory = [];
+  final Map<String, int> _eventHistory = {};
+
+  // Getters
+  double get walletBalance => _walletBalance;
+  double get emergencyFund => _emergencyFund;
+  double get savingsGoal => _savingsGoal;
+  double get totalMoney => _walletBalance + _emergencyFund + _savingsGoal;
+
   double get mood => _mood;
   int get currentDay => _currentDay;
+  int get currentMonth => _currentMonth;
   int get gamePoints => _gamePoints;
   Job? get selectedJob => _selectedJob;
   GameGoal? get selectedGoal => _selectedGoal;
   GameEvent? get currentEvent => _currentEvent;
   bool get isGameOver => _isGameOver;
   bool get isWin => _isWin;
+  bool get isPlanningPhase => _isPlanningPhase;
   List<MerchItem> get inventory => List.unmodifiable(_inventory);
 
   void setJob(Job job) {
@@ -103,6 +122,7 @@ class GameState with ChangeNotifier {
 
   static final List<GameEvent> allEvents = [
     const GameEvent(
+      id: 'phone_repair',
       title: 'Сломался экран телефона',
       description:
           'Неудачное падение! Экран вдребезги. Придется раскошелиться на ремонт.',
@@ -111,6 +131,7 @@ class GameState with ChangeNotifier {
       moodImpact: -10,
     ),
     const GameEvent(
+      id: 'pizza_friends',
       title: 'Друзья зовут в пиццерию',
       description:
           'Отличный вечер с друзьями поможет расслабиться, но стоит денег.',
@@ -119,6 +140,7 @@ class GameState with ChangeNotifier {
       moodImpact: 15,
     ),
     const GameEvent(
+      id: 'quiz_safe_cushion',
       title: 'Квиз от Неофлекс',
       description: 'Что такое финансовая подушка безопасности?',
       type: EventType.quiz,
@@ -134,6 +156,7 @@ class GameState with ChangeNotifier {
           'Финансовая подушка — это резерв на случай потери дохода.',
     ),
     const GameEvent(
+      id: 'found_money',
       title: 'Нашел 500 рублей',
       description: 'Мелочь, а приятно! Деньги валялись прямо на тротуаре.',
       type: EventType.random,
@@ -141,6 +164,7 @@ class GameState with ChangeNotifier {
       moodImpact: 5,
     ),
     const GameEvent(
+      id: 'quiz_inflation',
       title: 'Квиз: Инфляция',
       description: 'Как инфляция влияет на ваши сбережения?',
       type: EventType.quiz,
@@ -160,59 +184,156 @@ class GameState with ChangeNotifier {
     _selectedJob = job;
     _selectedGoal = goal;
     _currentDay = 1;
-    _money = job.salary;
+    _currentMonth = 1;
+    _walletBalance = 0;
+    _emergencyFund = 0;
+    _savingsGoal = 0;
     _mood = 80;
     _isGameOver = false;
     _isWin = false;
     _currentEvent = null;
+    _isPlanningPhase = true;
+    _eventHistory.clear();
+
+    // Initial budget distribution setup (e.g. 1st salary)
+    _startMonthLogic(job.salary, 5000); // Assume 5000 basic expenses
     notifyListeners();
   }
 
-  void nextTurn(int days) {
-    if (_isGameOver) return;
+  void _startMonthLogic(double salary, double expenses) {
+    // 1. Deduct expenses from wallet (or other accounts if needed)
+    _walletBalance -= expenses;
+    // 2. Add salary to wallet for distribution
+    _walletBalance += salary;
+    // 3. Mark planning phase
+    _isPlanningPhase = true;
+  }
 
-    _currentDay += days;
+  void startNewMonth(double salary, double expenses) {
+    _currentDay = 1;
+    _currentMonth++;
+    _startMonthLogic(salary, expenses);
+    notifyListeners();
+  }
+
+  void distributeBudget({
+    required double toWallet,
+    required double toEmergency,
+    required double toSavings,
+  }) {
+    // We assume the player distributes what is in the wallet after startMonthLogic
+    _walletBalance = toWallet;
+    _emergencyFund += toEmergency;
+    _savingsGoal += toSavings;
+    _isPlanningPhase = false;
+    notifyListeners();
+  }
+
+  void nextTurn() {
+    if (_isGameOver || _isPlanningPhase) return;
+
+    // Advanced time: 1-5 random days
+    int daysToAdd = Random().nextInt(5) + 1;
+    _currentDay += daysToAdd;
 
     if (_currentDay >= 30) {
       _currentDay = 30;
       _checkGameOver();
     } else {
+      // Chance of event 70%
       if (Random().nextDouble() < 0.7) {
-        _currentEvent = allEvents[Random().nextInt(allEvents.length)];
+        _triggerRandomEvent();
       }
     }
     notifyListeners();
   }
 
+  bool canTriggerEvent(String eventId) {
+    if (!_eventHistory.containsKey(eventId)) return true;
+    // "Breakdown" events ID naming convention or specific check
+    if (eventId.contains('repair')) {
+      return (_currentMonth - _eventHistory[eventId]!) >= 2;
+    }
+    return true;
+  }
+
+  void _triggerRandomEvent() {
+    List<GameEvent> eligibleEvents = allEvents
+        .where((e) => canTriggerEvent(e.id))
+        .toList();
+    if (eligibleEvents.isNotEmpty) {
+      _currentEvent = eligibleEvents[Random().nextInt(eligibleEvents.length)];
+      _eventHistory[_currentEvent!.id] = _currentMonth;
+    }
+  }
+
   void _checkGameOver() {
     _isGameOver = true;
-    if (_selectedGoal != null && _money >= _selectedGoal!.cost) {
+    if (_selectedGoal != null && _savingsGoal >= _selectedGoal!.cost) {
       _isWin = true;
     } else {
       _isWin = false;
     }
   }
 
+  // Handle choice with mood logic
+  void handleEventChoice(bool accepted) {
+    if (_currentEvent == null) return;
+
+    double moneyCost = _currentEvent!.moneyImpact;
+    double moodImpact = _currentEvent!.moodImpact;
+
+    if (_currentEvent!.type == EventType.voluntary) {
+      if (accepted) {
+        _applyFinancialImpact(moneyCost);
+        _mood += moodImpact;
+      } else {
+        // Penalty for skipping rest/social
+        _mood -= (moodImpact > 0 ? moodImpact : 10);
+      }
+    } else if (_currentEvent!.type == EventType.random) {
+      _applyFinancialImpact(moneyCost);
+      _mood += moodImpact;
+    }
+
+    _currentEvent = null;
+    _validateStats();
+    notifyListeners();
+  }
+
+  void _applyFinancialImpact(double amount) {
+    // amount is negative for costs
+    if (amount >= 0) {
+      _walletBalance += amount;
+      return;
+    }
+
+    double cost = amount.abs();
+    if (_walletBalance >= cost) {
+      _walletBalance -= cost;
+    } else {
+      // Auto-withdraw from emergency fund
+      double remaining = cost - _walletBalance;
+      _walletBalance = 0;
+      _emergencyFund -= remaining;
+    }
+  }
+
   void resolveEvent(bool accepted, {int? quizAnswerIndex}) {
     if (_currentEvent == null) return;
 
-    if (_currentEvent!.type == EventType.random) {
-      _money += _currentEvent!.moneyImpact;
-      _mood += _currentEvent!.moodImpact;
-    } else if (_currentEvent!.type == EventType.voluntary && accepted) {
-      _money += _currentEvent!.moneyImpact;
-      _mood += _currentEvent!.moodImpact;
-    } else if (_currentEvent!.type == EventType.quiz) {
+    if (_currentEvent!.type == EventType.quiz) {
       if (quizAnswerIndex == _currentEvent!.correctAnswerIndex) {
-        _money += _currentEvent!.moneyImpact;
-        _gamePoints += 100; // Reward points for correct quiz answer
+        _walletBalance += _currentEvent!.moneyImpact;
+        _gamePoints += 100;
         _mood += 10;
       } else {
         _mood -= 10;
       }
+      _currentEvent = null;
+    } else {
+      handleEventChoice(accepted);
     }
-
-    _currentEvent = null;
     _validateStats();
     notifyListeners();
   }
@@ -225,25 +346,13 @@ class GameState with ChangeNotifier {
     }
   }
 
-  void startNewMonth() {
-    if (_selectedJob != null && _selectedGoal != null) {
-      _currentDay = 1;
-      _money = _selectedJob!.salary;
-      _mood = 80;
-      _isGameOver = false;
-      _isWin = false;
-      _currentEvent = null;
-      notifyListeners();
-    }
-  }
-
   void _validateStats() {
     if (_mood > 100) _mood = 100;
     if (_mood < 0) _mood = 0;
   }
 
-  void updateMoney(double amount) {
-    _money += amount;
+  void updateWallet(double amount) {
+    _walletBalance += amount;
     notifyListeners();
   }
 
