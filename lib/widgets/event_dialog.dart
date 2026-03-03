@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:provider/provider.dart';
 import '../app_state.dart';
 
 class EventDialog extends StatefulWidget {
@@ -109,17 +110,44 @@ class _EventDialogState extends State<EventDialog> {
                 ),
               ),
             if (widget.event.type == EventType.voluntary && !showTip)
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
-                children: [
-                  Text(
-                    "💰${widget.event.moneyImpact} ₽\n🎭${widget.event.moodImpact}",
-                    style: const TextStyle(
-                      fontSize: 8,
-                      color: Colors.yellowAccent,
-                    ),
-                  ),
-                ],
+              Consumer<GameState>(
+                builder: (context, state, child) {
+                  bool needsEmergency =
+                      state.walletBalance < widget.event.moneyImpact.abs();
+                  return Column(
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          _statChip(
+                            '💰',
+                            '${widget.event.moneyImpact} ₽',
+                            Colors.yellowAccent,
+                          ),
+                          const SizedBox(width: 20),
+                          _statChip(
+                            '🎭',
+                            '${widget.event.moodImpact > 0 ? "+" : ""}${widget.event.moodImpact}',
+                            Colors.orangeAccent,
+                          ),
+                        ],
+                      ),
+                      if (needsEmergency)
+                        Padding(
+                          padding: const EdgeInsets.only(top: 10),
+                          child: Text(
+                            '⚠️ Придется залезть в Подушку!',
+                            textAlign: TextAlign.center,
+                            style: GoogleFonts.getFont(
+                              'Press Start 2P',
+                              fontSize: 7,
+                              color: Colors.orangeAccent,
+                            ),
+                          ),
+                        ),
+                    ],
+                  );
+                },
               ),
           ],
         ),
@@ -140,6 +168,23 @@ class _EventDialogState extends State<EventDialog> {
             "ПОНЯТНО",
             () => widget.onResolve(true, quizAnswerIndex: selectedOption),
           ),
+      ],
+    );
+  }
+
+  Widget _statChip(String icon, String label, Color color) {
+    return Column(
+      children: [
+        Text(icon, style: const TextStyle(fontSize: 12)),
+        const SizedBox(height: 4),
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 8,
+            color: color,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
       ],
     );
   }

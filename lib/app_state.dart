@@ -142,11 +142,14 @@ class GameState with ChangeNotifier {
   static final List<Job> availableJobs = [
     const Job(title: 'Курьер', salary: 35000, icon: '🚲'),
     const Job(title: 'Официант', salary: 45000, icon: '☕'),
+    const Job(title: 'Мл. Разработчик', salary: 65000, icon: '💻'),
+    const Job(title: 'Тестировщик', salary: 55000, icon: '🔍'),
   ];
 
   static final List<GameGoal> availableGoals = [
     const GameGoal(title: 'Смартфон', cost: 50000),
     const GameGoal(title: 'Консоль', cost: 70000),
+    const GameGoal(title: 'Ноутбук', cost: 120000),
   ];
 
   static final List<MerchItem> shopItems = [
@@ -163,7 +166,7 @@ class GameState with ChangeNotifier {
           'Неудачное падение! Экран вдребезги. Придется раскошелиться на ремонт.',
       type: EventType.random,
       moneyImpact: -5000,
-      moodImpact: -10,
+      moodImpact: -15,
     ),
     const GameEvent(
       id: 'pizza_friends',
@@ -173,6 +176,14 @@ class GameState with ChangeNotifier {
       type: EventType.voluntary,
       moneyImpact: -1500,
       moodImpact: 15,
+    ),
+    const GameEvent(
+      id: 'cinema_night',
+      title: 'Поход в кино',
+      description: 'Новый блокбастер вышел на экраны! Идем?',
+      type: EventType.voluntary,
+      moneyImpact: -1000,
+      moodImpact: 10,
     ),
     const GameEvent(
       id: 'quiz_safe_cushion',
@@ -226,16 +237,20 @@ class GameState with ChangeNotifier {
     _mood = 80;
     _isGameOver = false;
     _isWin = false;
-    _currentEvent = null;
     _isPlanningPhase = true;
     _eventHistory.clear();
     notifyListeners();
   }
 
   void startNewMonth() {
+    if (_isWin) {
+      _selectedJob = null; // Unlocks Tier 2 selection in PlanningScreen
+    }
     _currentDay = 1;
     _currentMonth++;
     _isPlanningPhase = true;
+    _isGameOver = false;
+    _isWin = false;
     notifyListeners();
   }
 
@@ -276,8 +291,9 @@ class GameState with ChangeNotifier {
 
   bool canTriggerEvent(String eventId) {
     if (!_eventHistory.containsKey(eventId)) return true;
-    // "Breakdown" events ID naming convention or specific check
-    if (eventId.contains('repair')) {
+
+    // Cooldown check: 2 months gap for breakdown/repair events
+    if (eventId.contains('repair') || eventId.contains('broken')) {
       return (_currentMonth - _eventHistory[eventId]!) >= 2;
     }
     return true;
@@ -302,7 +318,7 @@ class GameState with ChangeNotifier {
     }
   }
 
-  // Handle choice with mood logic
+  // Handle choice with priority and mood logic
   void handleEventChoice(bool accepted) {
     if (_currentEvent == null) return;
 
@@ -314,8 +330,8 @@ class GameState with ChangeNotifier {
         _applyFinancialImpact(moneyCost);
         _mood += moodImpact;
       } else {
-        // Penalty for skipping rest/social
-        _mood -= (moodImpact > 0 ? moodImpact : 10);
+        // Penalty for refusing social events is now higher (-15)
+        _mood -= 15;
       }
     } else if (_currentEvent!.type == EventType.random) {
       _applyFinancialImpact(moneyCost);
@@ -335,14 +351,44 @@ class GameState with ChangeNotifier {
     }
 
     double cost = amount.abs();
+
+    // Priority 1: Emergency Fund
+    if (_emergencyFund >= cost) {
+      _emergencyFund -= cost;
+      return;
+    } else {
+      cost -= _emergencyFund;
+      _emergencyFund = 0;
+    }
+
+    // Priority 2: Wallet
     if (_walletBalance >= cost) {
       _walletBalance -= cost;
+      return;
     } else {
-      // Auto-withdraw from emergency fund
-      double remaining = cost - _walletBalance;
+      cost -= _walletBalance;
       _walletBalance = 0;
-      _emergencyFund -= remaining;
     }
+
+    // Priority 3: Savings
+    if (_savingsGoal >= cost) {
+      _savingsGoal -= cost;
+      return;
+    } else {
+      cost -= _savingsGoal;
+      _savingsGoal = 0;
+    }
+
+    // If still cost > 0, Financial Crash!
+    if (cost > 0) {
+      _triggerFinancialCrash();
+    }
+  }
+
+  void _triggerFinancialCrash() {
+    _isGameOver = true;
+    _isWin = false;
+    // Maybe set a specific reason for game over later
   }
 
   void resolveEvent(bool accepted, {int? quizAnswerIndex}) {
