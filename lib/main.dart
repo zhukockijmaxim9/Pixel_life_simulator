@@ -10,7 +10,7 @@ import 'screens/shop_screen.dart';
 void main() {
   runApp(
     MultiProvider(
-      providers: [ChangeNotifierProvider(create: (_) => AppState())],
+      providers: [ChangeNotifierProvider(create: (_) => GameState())],
       child: const PixelPurseApp(),
     ),
   );
