@@ -115,6 +115,8 @@ class GameState with ChangeNotifier {
   double get totalMoney =>
       _walletBalance + _emergencyFund + _mandatoryBalance + _savingsGoal;
 
+  double get foodBudget => _walletBalance + _mandatoryBalance;
+
   double get mood => _mood;
   int get currentDay => _currentDay;
   int get currentMonth => _currentMonth;

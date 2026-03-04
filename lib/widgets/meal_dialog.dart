@@ -3,12 +3,12 @@ import 'package:google_fonts/google_fonts.dart';
 import '../app_state.dart';
 
 class MealDialog extends StatelessWidget {
-  final double walletBalance;
+  final double foodBudget;
   final Function(MealType) onChosen;
 
   const MealDialog({
     super.key,
-    required this.walletBalance,
+    required this.foodBudget,
     required this.onChosen,
   });
 
@@ -46,7 +46,7 @@ class MealDialog extends StatelessWidget {
             '1500 ₽',
             '+2 настроения',
             Colors.white,
-            walletBalance >= 1500,
+            foodBudget >= 1500,
             () => onChosen(MealType.standard),
           ),
           _mealOption(
@@ -55,7 +55,7 @@ class MealDialog extends StatelessWidget {
             '3500 ₽',
             '+15 настроения',
             Colors.cyanAccent,
-            walletBalance >= 3500,
+            foodBudget >= 3500,
             () => onChosen(MealType.luxury),
           ),
         ],

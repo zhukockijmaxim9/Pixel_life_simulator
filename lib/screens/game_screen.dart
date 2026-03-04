@@ -60,7 +60,7 @@ class _GameScreenState extends State<GameScreen> {
           context: context,
           barrierDismissible: false,
           builder: (context) => MealDialog(
-            walletBalance: state.walletBalance,
+            foodBudget: state.foodBudget,
             onChosen: (type) {
               state.chooseMeal(type);
               _isMealShowing = false;
