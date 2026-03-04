@@ -19,16 +19,25 @@ class SummaryScreen extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Text(
-                    state.isWin ? 'ПОБЕДА!' : 'МЕСЯЦ ЗАВЕРШЕН',
+                    state.isWin ? 'ЦЕЛЬ ДОСТИГНУТА!' : 'МЕСЯЦ ЗАВЕРШЁН',
                     style: GoogleFonts.getFont(
                       'Press Start 2P',
-                      fontSize: 24,
+                      fontSize: 18,
                       color: state.isWin
                           ? Colors.greenAccent
-                          : Colors.redAccent,
+                          : Colors.yellowAccent,
                     ),
                   ),
-                  const SizedBox(height: 40),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Месяц ${state.currentMonth}',
+                    style: GoogleFonts.getFont(
+                      'Press Start 2P',
+                      fontSize: 10,
+                      color: Colors.grey,
+                    ),
+                  ),
+                  const SizedBox(height: 30),
                   _buildStatRow(
                     'ВСЕГО ДЕНЕГ',
                     '${state.totalMoney.toStringAsFixed(0)} ₽',
@@ -51,73 +60,75 @@ class SummaryScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 10),
                   _buildStatRow('НАСТРОЕНИЕ', '${state.mood.toInt()}%'),
-                  _buildStatRow('МЕРЧ', '${state.inventory.length} шт.'),
                   _buildStatRow('БАЛЛЫ', '${state.gamePoints}'),
-                  const SizedBox(height: 20),
-                  Text(
-                    state.isWin ? 'ПОБЕДА!' : 'ПОРАЖЕНИЕ...',
-                    style: GoogleFonts.getFont(
-                      'Press Start 2P',
-                      fontSize: 24,
-                      color: state.isWin
-                          ? Colors.greenAccent
-                          : Colors.redAccent,
+
+                  if (state.isWin && state.selectedGoal != null)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 16),
+                      child: Container(
+                        padding: const EdgeInsets.all(12),
+                        color: Colors.greenAccent.withValues(alpha: 0.1),
+                        child: Text(
+                          '🎉 Цель "${state.selectedGoal!.title}" выполнена!\n+${state.selectedGoal!.pointsReward} баллов для мерча',
+                          textAlign: TextAlign.center,
+                          style: GoogleFonts.getFont(
+                            'Press Start 2P',
+                            fontSize: 8,
+                            color: Colors.greenAccent,
+                          ),
+                        ),
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 40),
-                  // Pixel Character representation
+
+                  const SizedBox(height: 20),
                   Icon(
                     state.isWin
                         ? Icons.sentiment_very_satisfied
-                        : Icons.sentiment_very_dissatisfied,
-                    size: 120,
-                    color: state.isWin ? Colors.greenAccent : Colors.redAccent,
+                        : Icons.sentiment_satisfied_alt,
+                    size: 80,
+                    color: state.isWin
+                        ? Colors.greenAccent
+                        : Colors.yellowAccent,
                   ),
-                  const SizedBox(height: 40),
+                  const SizedBox(height: 20),
+
                   Text(
                     state.isWin
-                        ? 'ВЫ НАКОПИЛИ 8000₽ И ВЫПОЛНИЛИ ЦЕЛЬ!'
-                        : 'ВАМ НЕ ХВАТИЛО ДЕНЕГ ДО ЦЕЛИ В 8000₽.',
+                        ? 'Отлично! Вы накопили на цель. Можно выбрать новую!'
+                        : 'Продолжайте копить. Впереди новый месяц!',
                     textAlign: TextAlign.center,
                     style: GoogleFonts.getFont(
                       'Press Start 2P',
-                      fontSize: 10,
+                      fontSize: 8,
                       color: Colors.white,
                     ),
                   ),
-                  const SizedBox(height: 20),
-                  Text(
-                    'БАЛАНС: ${state.totalMoney.toStringAsFixed(0)} ₽',
-                    style: const TextStyle(
-                      fontSize: 16,
-                      color: Colors.yellowAccent,
-                    ),
-                  ),
+
                   const Spacer(),
+
+                  // Next month → re-planning flow
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton(
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.cyanAccent,
                         foregroundColor: Colors.black,
+                        padding: const EdgeInsets.symmetric(vertical: 16),
                       ),
                       onPressed: () {
-                        // For a clean restart, we should ideally go back to planning or reset state
-                        // The user asked for "Try again", so we reset to a new month or planning
-                        if (state.isWin) {
-                          state.startNewMonth();
-                          Navigator.pushReplacementNamed(context, '/game');
-                        } else {
-                          // Reset completely
-                          Navigator.pushReplacementNamed(context, '/');
-                        }
+                        state.startNewMonth();
+                        Navigator.pushReplacementNamed(context, '/job_select');
                       },
                       child: Text(
-                        state.isWin ? 'СЛЕДУЮЩИЙ МЕСЯЦ' : 'ПОПРОБОВАТЬ СНОВА',
+                        'СЛЕДУЮЩИЙ МЕСЯЦ',
+                        style: GoogleFonts.getFont(
+                          'Press Start 2P',
+                          fontSize: 10,
+                        ),
                       ),
                     ),
                   ),
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 12),
                   TextButton(
                     onPressed: () => Navigator.pushNamedAndRemoveUntil(
                       context,
@@ -140,7 +151,7 @@ class SummaryScreen extends StatelessWidget {
 
   Widget _buildStatRow(String label, String value) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8),
+      padding: const EdgeInsets.symmetric(vertical: 6),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [

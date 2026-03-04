@@ -5,7 +5,8 @@ import '../app_state.dart';
 
 class EventDialog extends StatefulWidget {
   final GameEvent event;
-  final Function(bool accepted, {int? quizAnswerIndex}) onResolve;
+  final Function(bool accepted, {int? quizAnswerIndex, int? courseChoice})
+  onResolve;
 
   const EventDialog({super.key, required this.event, required this.onResolve});
 
@@ -30,8 +31,8 @@ class _EventDialogState extends State<EventDialog> {
         widget.event.title.toUpperCase(),
         style: GoogleFonts.getFont(
           'Press Start 2P',
-          fontSize: 16,
-          color: Colors.cyanAccent,
+          fontSize: 14,
+          color: _titleColor,
         ),
       ),
       content: SingleChildScrollView(
@@ -48,6 +49,8 @@ class _EventDialogState extends State<EventDialog> {
               ),
             ),
             const SizedBox(height: 20),
+
+            // QUIZ options
             if (widget.event.type == EventType.quiz && !showTip)
               ...List.generate(widget.event.options!.length, (index) {
                 return Padding(
@@ -78,7 +81,9 @@ class _EventDialogState extends State<EventDialog> {
                   ),
                 );
               }),
-            if (showTip)
+
+            // Quiz tip
+            if (showTip && widget.event.type == EventType.quiz)
               Container(
                 padding: const EdgeInsets.all(10),
                 color: isCorrect!
@@ -109,7 +114,68 @@ class _EventDialogState extends State<EventDialog> {
                   ],
                 ),
               ),
-            if (widget.event.type == EventType.voluntary && !showTip)
+
+            // RENT info
+            if (widget.event.type == EventType.rent)
+              Container(
+                padding: const EdgeInsets.all(12),
+                color: Colors.redAccent.withValues(alpha: 0.15),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Text('🏠', style: TextStyle(fontSize: 20)),
+                    const SizedBox(width: 12),
+                    Text(
+                      '${widget.event.moneyImpact.toInt()} ₽',
+                      style: GoogleFonts.getFont(
+                        'Press Start 2P',
+                        fontSize: 14,
+                        color: Colors.redAccent,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+            // COURSE options
+            if (widget.event.type == EventType.course)
+              ...List.generate(widget.event.options!.length, (index) {
+                bool isRefuse = index == widget.event.options!.length - 1;
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 10),
+                  child: SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: isRefuse
+                            ? Colors.grey[800]
+                            : Colors.cyanAccent.withValues(alpha: 0.2),
+                        foregroundColor: isRefuse
+                            ? Colors.grey
+                            : Colors.cyanAccent,
+                        side: BorderSide(
+                          color: isRefuse ? Colors.grey : Colors.cyanAccent,
+                        ),
+                      ),
+                      onPressed: () {
+                        widget.onResolve(true, courseChoice: index);
+                      },
+                      child: Text(
+                        index < 2
+                            ? '${widget.event.options![index]} — 5000₽'
+                            : widget.event.options![index],
+                        style: GoogleFonts.getFont(
+                          'Press Start 2P',
+                          fontSize: 8,
+                        ),
+                      ),
+                    ),
+                  ),
+                );
+              }),
+
+            // VOLUNTARY stat chips
+            if (widget.event.type == EventType.voluntary)
               Consumer<GameState>(
                 builder: (context, state, child) {
                   bool needsEmergency =
@@ -132,7 +198,7 @@ class _EventDialogState extends State<EventDialog> {
                           ),
                         ],
                       ),
-                      if (needsEmergency)
+                      if (needsEmergency && widget.event.moneyImpact < 0)
                         Padding(
                           padding: const EdgeInsets.only(top: 10),
                           child: Text(
@@ -152,24 +218,57 @@ class _EventDialogState extends State<EventDialog> {
           ],
         ),
       ),
-      actions: [
-        if (widget.event.type == EventType.random)
-          _pixelButton("OK", () => widget.onResolve(true)),
-        if (widget.event.type == EventType.voluntary) ...[
+      actions: _buildActions(),
+    );
+  }
+
+  Color get _titleColor {
+    switch (widget.event.type) {
+      case EventType.rent:
+        return Colors.redAccent;
+      case EventType.course:
+        return Colors.purpleAccent;
+      case EventType.quiz:
+        return Colors.yellowAccent;
+      default:
+        return Colors.cyanAccent;
+    }
+  }
+
+  List<Widget> _buildActions() {
+    switch (widget.event.type) {
+      case EventType.random:
+        return [_pixelButton("OK", () => widget.onResolve(true))];
+      case EventType.voluntary:
+        return [
           _pixelButton("ОТКАЗАТЬСЯ", () => widget.onResolve(false)),
           _pixelButton(
             "СОГЛАСИТЬСЯ",
             () => widget.onResolve(true),
             isPrimary: true,
           ),
-        ],
-        if (widget.event.type == EventType.quiz && showTip)
+        ];
+      case EventType.quiz:
+        if (showTip) {
+          return [
+            _pixelButton(
+              "ПОНЯТНО",
+              () => widget.onResolve(true, quizAnswerIndex: selectedOption),
+            ),
+          ];
+        }
+        return [];
+      case EventType.rent:
+        return [
           _pixelButton(
-            "ПОНЯТНО",
-            () => widget.onResolve(true, quizAnswerIndex: selectedOption),
+            "ОПЛАТИТЬ",
+            () => widget.onResolve(true),
+            isPrimary: true,
           ),
-      ],
-    );
+        ];
+      case EventType.course:
+        return []; // Buttons are inline (in content)
+    }
   }
 
   Widget _statChip(String icon, String label, Color color) {

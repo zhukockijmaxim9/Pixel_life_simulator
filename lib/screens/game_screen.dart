@@ -536,10 +536,11 @@ class _GameScreenState extends State<GameScreen> {
             if (state.currentEvent != null)
               EventDialog(
                 event: state.currentEvent!,
-                onResolve: (accepted, {quizAnswerIndex}) {
+                onResolve: (accepted, {quizAnswerIndex, courseChoice}) {
                   state.resolveEvent(
                     accepted,
                     quizAnswerIndex: quizAnswerIndex,
+                    courseChoice: courseChoice,
                   );
                 },
               ),

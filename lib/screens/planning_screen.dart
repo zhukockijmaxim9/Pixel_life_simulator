@@ -92,6 +92,16 @@ class _PlanningScreenState extends State<PlanningScreen> {
                     color: Colors.grey,
                   ),
                 ),
+                const SizedBox(height: 8),
+                Text(
+                  'Достигни цели и получи бонусные баллы для покупки крутого мерча за достижение!',
+                  style: GoogleFonts.getFont(
+                    'Press Start 2P',
+                    fontSize: 7,
+                    color: Colors.white38,
+                    height: 1.5,
+                  ),
+                ),
                 const SizedBox(height: 20),
                 ...GameState.availableGoals.map((goal) => _goalCard(goal)),
               ],
@@ -171,6 +181,10 @@ class _PlanningScreenState extends State<PlanningScreen> {
                     });
                   },
                 ),
+                _sliderDescription(
+                  'Свободные деньги на развлечение, досуг и покупку еды, если обязательные траты кончились.',
+                ),
+                const SizedBox(height: 16),
                 _budgetSlider(
                   label: 'ПОДУШКА',
                   value: _emergencyPct,
@@ -189,6 +203,10 @@ class _PlanningScreenState extends State<PlanningScreen> {
                     });
                   },
                 ),
+                _sliderDescription(
+                  'Запас на случай ЧП и непредвиденных штрафов или поломок.',
+                ),
+                const SizedBox(height: 16),
                 _budgetSlider(
                   label: 'ОБЯЗАТЕЛЬНЫЕ ТРАТЫ',
                   value: _mandatoryPct,
@@ -206,6 +224,9 @@ class _PlanningScreenState extends State<PlanningScreen> {
                       _mandatoryPct = val;
                     });
                   },
+                ),
+                _sliderDescription(
+                  'Деньги на еду и ежемесячную оплату аренды жилья.',
                 ),
               ],
             ),
@@ -339,6 +360,7 @@ class _PlanningScreenState extends State<PlanningScreen> {
               walletPct: _walletPct.toInt(),
               emergencyPct: _emergencyPct.toInt(),
               mandatoryPct: _mandatoryPct.toInt(),
+              isNewGame: state.currentMonth <= 1,
             );
             Navigator.pushReplacementNamed(context, '/game');
           },
@@ -501,6 +523,21 @@ class _PlanningScreenState extends State<PlanningScreen> {
           onChanged: onChanged,
         ),
       ],
+    );
+  }
+
+  Widget _sliderDescription(String text) {
+    return Padding(
+      padding: const EdgeInsets.only(top: 4, bottom: 8),
+      child: Text(
+        text,
+        style: GoogleFonts.getFont(
+          'Press Start 2P',
+          fontSize: 6,
+          color: Colors.white24,
+          height: 1.4,
+        ),
+      ),
     );
   }
 
