@@ -42,6 +42,10 @@ class SummaryScreen extends StatelessWidget {
                     '${state.emergencyFund.toStringAsFixed(0)} ₽',
                   ),
                   _buildStatRow(
+                    ' - ОБЯЗАТЕЛЬНЫЕ',
+                    '${state.mandatoryBalance.toStringAsFixed(0)} ₽',
+                  ),
+                  _buildStatRow(
                     ' - КОПИЛКА',
                     '${state.savingsGoal.toStringAsFixed(0)} ₽',
                   ),

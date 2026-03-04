@@ -14,8 +14,9 @@ class _PlanningScreenState extends State<PlanningScreen> {
   // Initial Setup State (Job/Goal)
   Job? _tempJob;
   GameGoal? _tempGoal;
-  double _walletPct = 50;
+  double _walletPct = 40;
   double _emergencyPct = 30;
+  double _mandatoryPct = 30;
 
   @override
   Widget build(BuildContext context) {
@@ -80,11 +81,19 @@ class _PlanningScreenState extends State<PlanningScreen> {
                   surplus:
                       (GameState.SALARY -
                       GameState.RENT -
-                      (_tempGoal?.monthlyContribution ?? 0)),
+                      (_tempGoal?.monthlyContribution ?? 0.0)),
                   onChanged: (val) {
                     setState(() {
+                      double rem = 100 - val;
+                      double oldSum = _emergencyPct + _mandatoryPct;
+                      if (oldSum > 0) {
+                        _emergencyPct = rem * (_emergencyPct / oldSum);
+                        _mandatoryPct = rem * (_mandatoryPct / oldSum);
+                      } else {
+                        _emergencyPct = rem / 2;
+                        _mandatoryPct = rem / 2;
+                      }
                       _walletPct = val;
-                      _emergencyPct = 100 - val;
                     });
                   },
                 ),
@@ -94,11 +103,41 @@ class _PlanningScreenState extends State<PlanningScreen> {
                   surplus:
                       (GameState.SALARY -
                       GameState.RENT -
-                      (_tempGoal?.monthlyContribution ?? 0)),
+                      (_tempGoal?.monthlyContribution ?? 0.0)),
                   onChanged: (val) {
                     setState(() {
+                      double rem = 100 - val;
+                      double oldSum = _walletPct + _mandatoryPct;
+                      if (oldSum > 0) {
+                        _walletPct = rem * (_walletPct / oldSum);
+                        _mandatoryPct = rem * (_mandatoryPct / oldSum);
+                      } else {
+                        _walletPct = rem / 2;
+                        _mandatoryPct = rem / 2;
+                      }
                       _emergencyPct = val;
-                      _walletPct = 100 - val;
+                    });
+                  },
+                ),
+                _budgetSlider(
+                  label: 'ОБЯЗАТЕЛЬНЫЕ',
+                  value: _mandatoryPct,
+                  surplus:
+                      (GameState.SALARY -
+                      GameState.RENT -
+                      (_tempGoal?.monthlyContribution ?? 0.0)),
+                  onChanged: (val) {
+                    setState(() {
+                      double rem = 100 - val;
+                      double oldSum = _walletPct + _emergencyPct;
+                      if (oldSum > 0) {
+                        _walletPct = rem * (_walletPct / oldSum);
+                        _emergencyPct = rem * (_emergencyPct / oldSum);
+                      } else {
+                        _walletPct = rem / 2;
+                        _emergencyPct = rem / 2;
+                      }
+                      _mandatoryPct = val;
                     });
                   },
                 ),
@@ -116,6 +155,7 @@ class _PlanningScreenState extends State<PlanningScreen> {
               _tempGoal!,
               walletPct: _walletPct.toInt(),
               emergencyPct: _emergencyPct.toInt(),
+              mandatoryPct: _mandatoryPct.toInt(),
             );
             Navigator.pushReplacementNamed(context, '/game');
           },

@@ -72,6 +72,7 @@ class GameState with ChangeNotifier {
   // Financial accounts
   double _walletBalance = 0;
   double _emergencyFund = 0;
+  double _mandatoryBalance = 0;
   double _savingsGoal = 0;
 
   double _mood = 80;
@@ -80,8 +81,9 @@ class GameState with ChangeNotifier {
   int _gamePoints = 0;
 
   // Budget distribution (percentages)
-  int _walletPercentage = 50;
-  int _emergencyPercentage = 50;
+  int _walletPercentage = 40;
+  int _emergencyPercentage = 30;
+  int _mandatoryPercentage = 30;
   // Goal is now a fixed absolute deduction, not a percentage
 
   int _daysSinceLastMeal = 0;
@@ -106,8 +108,10 @@ class GameState with ChangeNotifier {
   // Getters
   double get walletBalance => _walletBalance;
   double get emergencyFund => _emergencyFund;
+  double get mandatoryBalance => _mandatoryBalance;
   double get savingsGoal => _savingsGoal;
-  double get totalMoney => _walletBalance + _emergencyFund + _savingsGoal;
+  double get totalMoney =>
+      _walletBalance + _emergencyFund + _mandatoryBalance + _savingsGoal;
 
   double get mood => _mood;
   int get currentDay => _currentDay;
@@ -125,7 +129,11 @@ class GameState with ChangeNotifier {
 
   int get walletPercentage => _walletPercentage;
   int get emergencyPercentage => _emergencyPercentage;
-  int get goalPercentage => 100 - _walletPercentage - _emergencyPercentage;
+  int get mandatoryPercentage => _mandatoryPercentage;
+  int get goalPercentage =>
+      100 -
+      _walletPercentage -
+      _emergencyPercentage; // (Used only as fallback/internal)
 
   void setJob(Job job) {
     _selectedJob = job;
@@ -242,13 +250,15 @@ class GameState with ChangeNotifier {
   void setupGame(
     Job job,
     GameGoal goal, {
-    int walletPct = 50,
+    int walletPct = 40,
     int emergencyPct = 30,
+    int mandatoryPct = 30,
   }) {
     _selectedJob = job;
     _selectedGoal = goal;
     _walletPercentage = walletPct;
     _emergencyPercentage = emergencyPct;
+    _mandatoryPercentage = mandatoryPct;
 
     _currentDay = 1;
     _currentMonth = 1;
@@ -259,6 +269,7 @@ class GameState with ChangeNotifier {
 
     _walletBalance = surplus * (_walletPercentage / 100);
     _emergencyFund = surplus * (_emergencyPercentage / 100);
+    _mandatoryBalance = surplus * (_mandatoryPercentage / 100);
     _savingsGoal = goalContrib;
 
     _mood = 80;
@@ -272,9 +283,10 @@ class GameState with ChangeNotifier {
     notifyListeners();
   }
 
-  void updateDistribution(int walletPct, int emergencyPct) {
+  void updateDistribution(int walletPct, int emergencyPct, int mandatoryPct) {
     _walletPercentage = walletPct;
     _emergencyPercentage = emergencyPct;
+    _mandatoryPercentage = mandatoryPct;
     notifyListeners();
   }
 
@@ -296,6 +308,7 @@ class GameState with ChangeNotifier {
     double surplus = SALARY - RENT - (_selectedGoal?.monthlyContribution ?? 0);
     _walletBalance += surplus * (_walletPercentage / 100);
     _emergencyFund += surplus * (_emergencyPercentage / 100);
+    _mandatoryBalance += surplus * (_mandatoryPercentage / 100);
     _savingsGoal += _selectedGoal?.monthlyContribution ?? 0;
 
     _isPlanningPhase = false;
@@ -451,13 +464,14 @@ class GameState with ChangeNotifier {
 
     double cost = amount.abs();
 
-    // Priority 1: Emergency Fund
-    if (_emergencyFund >= cost) {
-      _emergencyFund -= cost;
+    // Priority 1: Mandatory Balance (New logic for "Mandatory" costs)
+    // We treat all regular costs as "spending" that should come from Mandatory if available
+    if (_mandatoryBalance >= cost) {
+      _mandatoryBalance -= cost;
       return;
     } else {
-      cost -= _emergencyFund;
-      _emergencyFund = 0;
+      cost -= _mandatoryBalance;
+      _mandatoryBalance = 0;
     }
 
     // Priority 2: Wallet
@@ -469,7 +483,16 @@ class GameState with ChangeNotifier {
       _walletBalance = 0;
     }
 
-    // Priority 3: Savings (allowed for mandatory/debuffs)
+    // Priority 3: Emergency Fund (Should be used for breakdown/accidents, but here fallback)
+    if (_emergencyFund >= cost) {
+      _emergencyFund -= cost;
+      return;
+    } else {
+      cost -= _emergencyFund;
+      _emergencyFund = 0;
+    }
+
+    // Priority 4: Savings
     if (_savingsGoal >= cost) {
       _savingsGoal -= cost;
       return;

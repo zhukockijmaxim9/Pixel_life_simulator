@@ -113,10 +113,30 @@ class _GameScreenState extends State<GameScreen> {
                     surplus:
                         (GameState.SALARY -
                         GameState.RENT -
-                        (state.selectedGoal?.monthlyContribution ?? 0)),
+                        (state.selectedGoal?.monthlyContribution ?? 0.0)),
                     onChanged: (val) {
-                      int wallet = val.toInt();
-                      state.updateDistribution(wallet, 100 - wallet);
+                      double rem = 100 - val;
+                      double oldSum =
+                          (state.emergencyPercentage +
+                                  state.mandatoryPercentage)
+                              .toDouble();
+                      int newEmergency, newMandatory;
+                      if (oldSum > 0) {
+                        newEmergency =
+                            (rem * (state.emergencyPercentage / oldSum))
+                                .toInt();
+                        newMandatory =
+                            (rem * (state.mandatoryPercentage / oldSum))
+                                .toInt();
+                      } else {
+                        newEmergency = (rem / 2).toInt();
+                        newMandatory = (rem / 2).toInt();
+                      }
+                      state.updateDistribution(
+                        val.toInt(),
+                        newEmergency,
+                        newMandatory,
+                      );
                       setState(() {});
                     },
                   ),
@@ -126,10 +146,59 @@ class _GameScreenState extends State<GameScreen> {
                     surplus:
                         (GameState.SALARY -
                         GameState.RENT -
-                        (state.selectedGoal?.monthlyContribution ?? 0)),
+                        (state.selectedGoal?.monthlyContribution ?? 0.0)),
                     onChanged: (val) {
-                      int emergency = val.toInt();
-                      state.updateDistribution(100 - emergency, emergency);
+                      double rem = 100 - val;
+                      double oldSum =
+                          (state.walletPercentage + state.mandatoryPercentage)
+                              .toDouble();
+                      int newWallet, newMandatory;
+                      if (oldSum > 0) {
+                        newWallet = (rem * (state.walletPercentage / oldSum))
+                            .toInt();
+                        newMandatory =
+                            (rem * (state.mandatoryPercentage / oldSum))
+                                .toInt();
+                      } else {
+                        newWallet = (rem / 2).toInt();
+                        newMandatory = (rem / 2).toInt();
+                      }
+                      state.updateDistribution(
+                        newWallet,
+                        val.toInt(),
+                        newMandatory,
+                      );
+                      setState(() {});
+                    },
+                  ),
+                  _dialogSlider(
+                    label: 'ОБЯЗАТЕЛЬНЫЕ',
+                    value: state.mandatoryPercentage.toDouble(),
+                    surplus:
+                        (GameState.SALARY -
+                        GameState.RENT -
+                        (state.selectedGoal?.monthlyContribution ?? 0.0)),
+                    onChanged: (val) {
+                      double rem = 100 - val;
+                      double oldSum =
+                          (state.walletPercentage + state.emergencyPercentage)
+                              .toDouble();
+                      int newWallet, newEmergency;
+                      if (oldSum > 0) {
+                        newWallet = (rem * (state.walletPercentage / oldSum))
+                            .toInt();
+                        newEmergency =
+                            (rem * (state.emergencyPercentage / oldSum))
+                                .toInt();
+                      } else {
+                        newWallet = (rem / 2).toInt();
+                        newEmergency = (rem / 2).toInt();
+                      }
+                      state.updateDistribution(
+                        newWallet,
+                        newEmergency,
+                        val.toInt(),
+                      );
                       setState(() {});
                     },
                   ),
@@ -332,6 +401,11 @@ class _GameScreenState extends State<GameScreen> {
                                     '🛡️',
                                     state.emergencyFund,
                                     Colors.orangeAccent,
+                                  ),
+                                  _accountPanel(
+                                    '📜',
+                                    state.mandatoryBalance,
+                                    Colors.lightBlueAccent,
                                   ),
                                   _accountPanel(
                                     '🎯',
