@@ -65,7 +65,7 @@ class MerchItem {
 enum MealType { economy, standard, luxury, skip }
 
 class GameState with ChangeNotifier {
-  static const double RENT = 18000;
+  static const double RENT = 5000;
   static const double MONTHLY_GOAL = 8000;
 
   // Dynamic salary based on selected job
@@ -91,6 +91,7 @@ class GameState with ChangeNotifier {
   int _daysSinceLastMeal = 0;
   int _mealThreshold = Random().nextInt(3) + 2; // Every 2-4 days
   bool _needsMeal = false;
+  bool _rentPaid = false;
 
   final StreamController<String> _notificationController =
       StreamController<String>.broadcast();
@@ -249,7 +250,25 @@ class GameState with ChangeNotifier {
       moneyImpact: 2000,
       educationalTip: 'Инфляция — это процесс обесценивания денег.',
     ),
+    const GameEvent(
+      id: 'quiz_budget',
+      title: 'Квиз: Бюджет',
+      description: 'Какой главный принцип ведения личного бюджета?',
+      type: EventType.quiz,
+      options: [
+        'Тратить всё что заработал',
+        'Записывать доходы и расходы',
+        'Копить абсолютно все деньги',
+        'Брать кредиты на всё',
+      ],
+      correctAnswerIndex: 1,
+      moneyImpact: 2000,
+      educationalTip:
+          'Ведение бюджета — основа финансовой грамотности. Записывайте все доходы и расходы.',
+    ),
   ];
+
+  static const List<int> quizDays = [9, 19, 29];
 
   void setupGame(
     Job job,
@@ -269,12 +288,13 @@ class GameState with ChangeNotifier {
     _gamePoints = 0;
 
     double goalContrib = _selectedGoal?.monthlyContribution ?? 0;
-    double surplus = salary - RENT - goalContrib;
+    double surplus = salary - goalContrib;
 
     _walletBalance = surplus * (_walletPercentage / 100);
     _emergencyFund = surplus * (_emergencyPercentage / 100);
     _mandatoryBalance = surplus * (_mandatoryPercentage / 100);
     _savingsGoal = goalContrib;
+    _rentPaid = false;
 
     _mood = 80;
     _gamePoints = 0;
@@ -309,7 +329,7 @@ class GameState with ChangeNotifier {
     _currentDay = 1;
     _currentMonth++;
 
-    double surplus = salary - RENT - (_selectedGoal?.monthlyContribution ?? 0);
+    double surplus = salary - (_selectedGoal?.monthlyContribution ?? 0);
     _walletBalance += surplus * (_walletPercentage / 100);
     _emergencyFund += surplus * (_emergencyPercentage / 100);
     _mandatoryBalance += surplus * (_mandatoryPercentage / 100);
@@ -319,6 +339,7 @@ class GameState with ChangeNotifier {
     _isGameOver = false;
     _isWin = false;
     _daysSinceLastMeal = 0;
+    _rentPaid = false;
     notifyListeners();
   }
 
@@ -354,6 +375,18 @@ class GameState with ChangeNotifier {
       _currentDay = 30;
       _checkGameOver();
       return;
+    }
+
+    // Rent deduction on day 2
+    if (_currentDay >= 2 && !_rentPaid) {
+      _rentPaid = true;
+      _applyMandatoryExpense(RENT);
+      _notificationController.add('Оплата аренды: -${RENT.toInt()}₽');
+    }
+
+    // Quiz on scheduled days (9, 19, 29)
+    if (quizDays.contains(_currentDay) && _currentEvent == null) {
+      _triggerQuiz();
     }
 
     // Mood debuffs
@@ -452,11 +485,20 @@ class GameState with ChangeNotifier {
 
   void _triggerRandomEvent() {
     List<GameEvent> eligibleEvents = allEvents
-        .where((e) => canTriggerEvent(e.id))
+        .where((e) => e.type != EventType.quiz && canTriggerEvent(e.id))
         .toList();
     if (eligibleEvents.isNotEmpty) {
       _currentEvent = eligibleEvents[Random().nextInt(eligibleEvents.length)];
       _eventHistory[_currentEvent!.id] = _currentMonth;
+    }
+  }
+
+  void _triggerQuiz() {
+    List<GameEvent> quizEvents = allEvents
+        .where((e) => e.type == EventType.quiz)
+        .toList();
+    if (quizEvents.isNotEmpty) {
+      _currentEvent = quizEvents[Random().nextInt(quizEvents.length)];
     }
   }
 

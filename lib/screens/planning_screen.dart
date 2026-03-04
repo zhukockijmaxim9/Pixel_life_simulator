@@ -28,8 +28,7 @@ class _PlanningScreenState extends State<PlanningScreen> {
   }
 
   double get _jobSalary => _tempJob?.salary ?? 45000;
-  double get _surplus =>
-      _jobSalary - GameState.RENT - (_tempGoal?.monthlyContribution ?? 0.0);
+  double get _surplus => _jobSalary - (_tempGoal?.monthlyContribution ?? 0.0);
 
   void _goBack() {
     if (_step > 0) {
@@ -291,11 +290,6 @@ class _PlanningScreenState extends State<PlanningScreen> {
                         Colors.white,
                       ),
                       _summaryRow(
-                        'Аренда',
-                        '-${GameState.RENT.toInt()} ₽',
-                        Colors.redAccent,
-                      ),
-                      _summaryRow(
                         'На цель (${_tempGoal!.title})',
                         '-${goalMoney.toInt()} ₽',
                         Colors.yellowAccent,
@@ -321,6 +315,12 @@ class _PlanningScreenState extends State<PlanningScreen> {
                         '  📜 Обязат. (${_mandatoryPct.toInt()}%)',
                         '${mandatoryMoney.toInt()} ₽',
                         Colors.lightBlueAccent,
+                      ),
+                      const SizedBox(height: 12),
+                      _summaryRow(
+                        '🏠 Аренда (списание 2-го числа)',
+                        '-${GameState.RENT.toInt()} ₽',
+                        Colors.redAccent,
                       ),
                     ],
                   ),

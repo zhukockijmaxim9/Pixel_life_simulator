@@ -75,10 +75,18 @@ class _GameScreenState extends State<GameScreen> {
   }
 
   void _showBudgetDialog(BuildContext context, GameState state) {
+    // Local copies
+    int localWallet = state.walletPercentage;
+    int localEmergency = state.emergencyPercentage;
+    int localMandatory = state.mandatoryPercentage;
+    GameGoal? localGoal = state.selectedGoal;
+
     showDialog(
       context: context,
       builder: (context) => StatefulBuilder(
         builder: (context, setState) {
+          double surplus =
+              state.salary - (localGoal?.monthlyContribution ?? 0.0);
           return AlertDialog(
             backgroundColor: const Color(0xFF1E1E1E),
             shape: const RoundedRectangleBorder(
@@ -109,96 +117,60 @@ class _GameScreenState extends State<GameScreen> {
                   const SizedBox(height: 16),
                   _dialogSlider(
                     label: 'КОШЕЛЕК',
-                    value: state.walletPercentage.toDouble(),
-                    surplus:
-                        (state.salary -
-                        GameState.RENT -
-                        (state.selectedGoal?.monthlyContribution ?? 0.0)),
+                    value: localWallet.toDouble(),
+                    surplus: surplus,
                     onChanged: (val) {
                       double rem = 100 - val;
-                      double oldSum =
-                          (state.emergencyPercentage +
-                                  state.mandatoryPercentage)
-                              .toDouble();
-                      int newEmergency, newMandatory;
+                      double oldSum = (localEmergency + localMandatory)
+                          .toDouble();
                       if (oldSum > 0) {
-                        newEmergency =
-                            (rem * (state.emergencyPercentage / oldSum))
-                                .toInt();
-                        newMandatory =
-                            (rem * (state.mandatoryPercentage / oldSum))
-                                .toInt();
+                        localEmergency = (rem * (localEmergency / oldSum))
+                            .toInt();
+                        localMandatory = (rem * (localMandatory / oldSum))
+                            .toInt();
                       } else {
-                        newEmergency = (rem / 2).toInt();
-                        newMandatory = (rem / 2).toInt();
+                        localEmergency = (rem / 2).toInt();
+                        localMandatory = (rem / 2).toInt();
                       }
-                      state.updateDistribution(
-                        val.toInt(),
-                        newEmergency,
-                        newMandatory,
-                      );
+                      localWallet = val.toInt();
                       setState(() {});
                     },
                   ),
                   _dialogSlider(
                     label: 'ПОДУШКА',
-                    value: state.emergencyPercentage.toDouble(),
-                    surplus:
-                        (state.salary -
-                        GameState.RENT -
-                        (state.selectedGoal?.monthlyContribution ?? 0.0)),
+                    value: localEmergency.toDouble(),
+                    surplus: surplus,
                     onChanged: (val) {
                       double rem = 100 - val;
-                      double oldSum =
-                          (state.walletPercentage + state.mandatoryPercentage)
-                              .toDouble();
-                      int newWallet, newMandatory;
+                      double oldSum = (localWallet + localMandatory).toDouble();
                       if (oldSum > 0) {
-                        newWallet = (rem * (state.walletPercentage / oldSum))
+                        localWallet = (rem * (localWallet / oldSum)).toInt();
+                        localMandatory = (rem * (localMandatory / oldSum))
                             .toInt();
-                        newMandatory =
-                            (rem * (state.mandatoryPercentage / oldSum))
-                                .toInt();
                       } else {
-                        newWallet = (rem / 2).toInt();
-                        newMandatory = (rem / 2).toInt();
+                        localWallet = (rem / 2).toInt();
+                        localMandatory = (rem / 2).toInt();
                       }
-                      state.updateDistribution(
-                        newWallet,
-                        val.toInt(),
-                        newMandatory,
-                      );
+                      localEmergency = val.toInt();
                       setState(() {});
                     },
                   ),
                   _dialogSlider(
                     label: 'ОБЯЗАТЕЛЬНЫЕ',
-                    value: state.mandatoryPercentage.toDouble(),
-                    surplus:
-                        (state.salary -
-                        GameState.RENT -
-                        (state.selectedGoal?.monthlyContribution ?? 0.0)),
+                    value: localMandatory.toDouble(),
+                    surplus: surplus,
                     onChanged: (val) {
                       double rem = 100 - val;
-                      double oldSum =
-                          (state.walletPercentage + state.emergencyPercentage)
-                              .toDouble();
-                      int newWallet, newEmergency;
+                      double oldSum = (localWallet + localEmergency).toDouble();
                       if (oldSum > 0) {
-                        newWallet = (rem * (state.walletPercentage / oldSum))
+                        localWallet = (rem * (localWallet / oldSum)).toInt();
+                        localEmergency = (rem * (localEmergency / oldSum))
                             .toInt();
-                        newEmergency =
-                            (rem * (state.emergencyPercentage / oldSum))
-                                .toInt();
                       } else {
-                        newWallet = (rem / 2).toInt();
-                        newEmergency = (rem / 2).toInt();
+                        localWallet = (rem / 2).toInt();
+                        localEmergency = (rem / 2).toInt();
                       }
-                      state.updateDistribution(
-                        newWallet,
-                        newEmergency,
-                        val.toInt(),
-                      );
+                      localMandatory = val.toInt();
                       setState(() {});
                     },
                   ),
@@ -217,7 +189,7 @@ class _GameScreenState extends State<GameScreen> {
                           ),
                         ),
                         Text(
-                          '${state.selectedGoal?.monthlyContribution.toInt() ?? 0} ₽',
+                          '${localGoal?.monthlyContribution.toInt() ?? 0} ₽',
                           style: GoogleFonts.getFont(
                             'Press Start 2P',
                             fontSize: 6,
@@ -239,10 +211,10 @@ class _GameScreenState extends State<GameScreen> {
                   ),
                   const SizedBox(height: 12),
                   ...GameState.availableGoals.map((goal) {
-                    bool isSelected = state.selectedGoal?.title == goal.title;
+                    bool isSelected = localGoal?.title == goal.title;
                     return InkWell(
                       onTap: () {
-                        state.setGoal(goal);
+                        localGoal = goal;
                         setState(() {});
                       },
                       child: Container(
@@ -296,7 +268,28 @@ class _GameScreenState extends State<GameScreen> {
               TextButton(
                 onPressed: () => Navigator.pop(context),
                 child: Text(
-                  'ЗАКРЫТЬ',
+                  'ОТМЕНА',
+                  style: GoogleFonts.getFont(
+                    'Press Start 2P',
+                    fontSize: 10,
+                    color: Colors.grey,
+                  ),
+                ),
+              ),
+              TextButton(
+                onPressed: () {
+                  state.updateDistribution(
+                    localWallet,
+                    localEmergency,
+                    localMandatory,
+                  );
+                  if (localGoal != null) {
+                    state.setGoal(localGoal!);
+                  }
+                  Navigator.pop(context);
+                },
+                child: Text(
+                  'ПРИМЕНИТЬ',
                   style: GoogleFonts.getFont(
                     'Press Start 2P',
                     fontSize: 10,
