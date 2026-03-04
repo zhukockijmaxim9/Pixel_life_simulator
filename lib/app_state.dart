@@ -380,25 +380,62 @@ class GameState with ChangeNotifier {
 
     switch (type) {
       case MealType.economy:
-        _applyFinancialImpact(-600);
+        _applyMandatoryExpense(600);
         _mood -= 10;
         break;
       case MealType.standard:
-        _applyFinancialImpact(-1500);
+        _applyMandatoryExpense(1500);
         _mood += 2;
         break;
       case MealType.luxury:
-        _applyFinancialImpact(-3500);
+        _applyMandatoryExpense(3500);
         _mood += 15;
         break;
       case MealType.skip:
         _mood -= 25;
-        _applyFinancialImpact(-2000); // Treatment
+        _applyMandatoryExpense(2000); // Treatment
         break;
     }
 
     _validateStats();
     notifyListeners();
+  }
+
+  /// Deducts cost specifically from mandatory balance first,
+  /// then falls back to wallet → emergency → savings.
+  void _applyMandatoryExpense(double cost) {
+    if (_mandatoryBalance >= cost) {
+      _mandatoryBalance -= cost;
+      return;
+    }
+    cost -= _mandatoryBalance;
+    _mandatoryBalance = 0;
+
+    if (_walletBalance >= cost) {
+      _walletBalance -= cost;
+      return;
+    }
+    cost -= _walletBalance;
+    _walletBalance = 0;
+
+    if (_emergencyFund >= cost) {
+      _emergencyFund -= cost;
+      return;
+    }
+    cost -= _emergencyFund;
+    _emergencyFund = 0;
+
+    if (_savingsGoal >= cost) {
+      _savingsGoal -= cost;
+      return;
+    }
+    cost -= _savingsGoal;
+    _savingsGoal = 0;
+
+    if (cost > 0) {
+      _isGameOver = true;
+      _isWin = false;
+    }
   }
 
   bool canTriggerEvent(String eventId) {

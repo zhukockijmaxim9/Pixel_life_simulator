@@ -11,6 +11,7 @@ class PlanningScreen extends StatefulWidget {
 }
 
 class _PlanningScreenState extends State<PlanningScreen> {
+  int _step = 0; // 0 = Goal, 1 = Budget, 2 = Confirmation
   Job? _tempJob;
   GameGoal? _tempGoal;
   double _walletPct = 40;
@@ -20,7 +21,6 @@ class _PlanningScreenState extends State<PlanningScreen> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    // Receive job from route arguments
     final job = ModalRoute.of(context)?.settings.arguments as Job?;
     if (job != null && _tempJob == null) {
       _tempJob = job;
@@ -31,28 +31,85 @@ class _PlanningScreenState extends State<PlanningScreen> {
   double get _surplus =>
       _jobSalary - GameState.RENT - (_tempGoal?.monthlyContribution ?? 0.0);
 
+  void _goBack() {
+    if (_step > 0) {
+      setState(() => _step--);
+    } else {
+      Navigator.pop(context); // Back to job selection
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    final titles = ['ВЫБЕРИ ЦЕЛЬ', 'НАСТРОЙ БЮДЖЕТ', 'ПОДТВЕРЖДЕНИЕ'];
     return Scaffold(
       backgroundColor: const Color(0xFF121212),
       appBar: AppBar(
         title: Text(
-          'ПЛАНИРОВАНИЕ',
-          style: GoogleFonts.getFont('Press Start 2P', fontSize: 14),
+          titles[_step],
+          style: GoogleFonts.getFont('Press Start 2P', fontSize: 12),
         ),
         backgroundColor: Colors.transparent,
         elevation: 0,
-        automaticallyImplyLeading: false,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Colors.white),
+          onPressed: _goBack,
+        ),
       ),
       body: Consumer<GameState>(
         builder: (context, state, child) {
-          return _buildSetupFlow(state, context);
+          switch (_step) {
+            case 0:
+              return _buildGoalStep();
+            case 1:
+              return _buildBudgetStep();
+            case 2:
+              return _buildConfirmStep(state);
+            default:
+              return const SizedBox();
+          }
         },
       ),
     );
   }
 
-  Widget _buildSetupFlow(GameState state, BuildContext context) {
+  // ===== STEP 0: Goal Selection =====
+  Widget _buildGoalStep() {
+    return Column(
+      children: [
+        // Job header
+        if (_tempJob != null) _jobHeader(),
+        Expanded(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'НА ЧТО БУДЕШЬ КОПИТЬ?',
+                  style: GoogleFonts.getFont(
+                    'Press Start 2P',
+                    fontSize: 9,
+                    color: Colors.grey,
+                  ),
+                ),
+                const SizedBox(height: 20),
+                ...GameState.availableGoals.map((goal) => _goalCard(goal)),
+              ],
+            ),
+          ),
+        ),
+        _navButton(
+          label: 'ДАЛЕЕ',
+          active: _tempGoal != null,
+          onPressed: () => setState(() => _step = 1),
+        ),
+      ],
+    );
+  }
+
+  // ===== STEP 1: Budget Distribution =====
+  Widget _buildBudgetStep() {
     return Column(
       children: [
         Expanded(
@@ -61,35 +118,42 @@ class _PlanningScreenState extends State<PlanningScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Job header
-                if (_tempJob != null) _jobHeader(),
-                const SizedBox(height: 24),
-
-                _sectionTitle('1. ВЫБЕРИТЕ ЦЕЛЬ'),
-                const SizedBox(height: 16),
-                ...GameState.availableGoals.map(
-                  (goal) => _selectionCard(
-                    title: goal.title,
-                    subtitle: '${goal.cost.toStringAsFixed(0)} ₽',
-                    icon: '🎯',
-                    isSelected: _tempGoal == goal,
-                    onTap: () => setState(() => _tempGoal = goal),
-                  ),
-                ),
-                const SizedBox(height: 32),
-
-                _sectionTitle('2. РАСПРЕДЕЛЕНИЕ БЮДЖЕТА'),
-                const SizedBox(height: 8),
                 Text(
-                  'Остаток после аренды и цели: ${_surplus.toInt()} ₽',
+                  'РАСПРЕДЕЛИ БЮДЖЕТ',
                   style: GoogleFonts.getFont(
                     'Press Start 2P',
-                    fontSize: 7,
+                    fontSize: 9,
                     color: Colors.grey,
                   ),
                 ),
-                const SizedBox(height: 16),
-
+                const SizedBox(height: 8),
+                Text(
+                  'Зарплата: ${_jobSalary.toInt()} ₽  |  Аренда: ${GameState.RENT.toInt()} ₽',
+                  style: GoogleFonts.getFont(
+                    'Press Start 2P',
+                    fontSize: 7,
+                    color: Colors.white38,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'На цель (фикс): ${(_tempGoal?.monthlyContribution ?? 0).toInt()} ₽',
+                  style: GoogleFonts.getFont(
+                    'Press Start 2P',
+                    fontSize: 7,
+                    color: Colors.yellowAccent,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'Остаток к распределению: ${_surplus.toInt()} ₽',
+                  style: GoogleFonts.getFont(
+                    'Press Start 2P',
+                    fontSize: 7,
+                    color: Colors.cyanAccent,
+                  ),
+                ),
+                const SizedBox(height: 24),
                 _budgetSlider(
                   label: 'КОШЕЛЕК',
                   value: _walletPct,
@@ -127,7 +191,7 @@ class _PlanningScreenState extends State<PlanningScreen> {
                   },
                 ),
                 _budgetSlider(
-                  label: 'ОБЯЗАТЕЛЬНЫЕ',
+                  label: 'ОБЯЗАТЕЛЬНЫЕ ТРАТЫ',
                   value: _mandatoryPct,
                   onChanged: (val) {
                     setState(() {
@@ -144,14 +208,130 @@ class _PlanningScreenState extends State<PlanningScreen> {
                     });
                   },
                 ),
-                _distributionSummary(),
               ],
             ),
           ),
         ),
-        _actionButton(
+        _navButton(
+          label: 'ДАЛЕЕ',
+          active: true,
+          onPressed: () => setState(() => _step = 2),
+        ),
+      ],
+    );
+  }
+
+  // ===== STEP 2: Confirmation =====
+  Widget _buildConfirmStep(GameState state) {
+    double walletMoney = _surplus * (_walletPct / 100);
+    double emergencyMoney = _surplus * (_emergencyPct / 100);
+    double mandatoryMoney = _surplus * (_mandatoryPct / 100);
+    double goalMoney = _tempGoal?.monthlyContribution ?? 0;
+
+    return Column(
+      children: [
+        Expanded(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'СВОДКА',
+                  style: GoogleFonts.getFont(
+                    'Press Start 2P',
+                    fontSize: 12,
+                    color: Colors.yellowAccent,
+                  ),
+                ),
+                const SizedBox(height: 24),
+
+                // Job
+                _summaryBlock(
+                  icon: _tempJob!.icon,
+                  title: 'ПРОФЕССИЯ',
+                  value: _tempJob!.title,
+                  sub: '${_jobSalary.toInt()} ₽/мес',
+                ),
+                const SizedBox(height: 16),
+
+                // Goal
+                _summaryBlock(
+                  icon: '🎯',
+                  title: 'ЦЕЛЬ',
+                  value: _tempGoal!.title,
+                  sub:
+                      '${_tempGoal!.cost.toInt()} ₽  (${goalMoney.toInt()} ₽/мес)',
+                ),
+                const SizedBox(height: 16),
+
+                // Budget breakdown
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF1E1E1E),
+                    border: Border.all(color: Colors.white24),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'БЮДЖЕТ НА МЕСЯЦ',
+                        style: GoogleFonts.getFont(
+                          'Press Start 2P',
+                          fontSize: 8,
+                          color: Colors.grey,
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      _summaryRow(
+                        'Зарплата',
+                        '${_jobSalary.toInt()} ₽',
+                        Colors.white,
+                      ),
+                      _summaryRow(
+                        'Аренда',
+                        '-${GameState.RENT.toInt()} ₽',
+                        Colors.redAccent,
+                      ),
+                      _summaryRow(
+                        'На цель (${_tempGoal!.title})',
+                        '-${goalMoney.toInt()} ₽',
+                        Colors.yellowAccent,
+                      ),
+                      const Divider(color: Colors.white24),
+                      _summaryRow(
+                        'Остаток',
+                        '${_surplus.toInt()} ₽',
+                        Colors.cyanAccent,
+                      ),
+                      const SizedBox(height: 12),
+                      _summaryRow(
+                        '  👛 Кошелек (${_walletPct.toInt()}%)',
+                        '${walletMoney.toInt()} ₽',
+                        Colors.yellowAccent,
+                      ),
+                      _summaryRow(
+                        '  🛡️ Подушка (${_emergencyPct.toInt()}%)',
+                        '${emergencyMoney.toInt()} ₽',
+                        Colors.orangeAccent,
+                      ),
+                      _summaryRow(
+                        '  📜 Обязат. (${_mandatoryPct.toInt()}%)',
+                        '${mandatoryMoney.toInt()} ₽',
+                        Colors.lightBlueAccent,
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+        _navButton(
           label: 'НАЧАТЬ ЖИЗНЬ',
-          active: _tempJob != null && _tempGoal != null,
+          active: true,
           onPressed: () {
             state.setupGame(
               _tempJob!,
@@ -167,40 +347,23 @@ class _PlanningScreenState extends State<PlanningScreen> {
     );
   }
 
+  // ===== Shared Widgets =====
+
   Widget _jobHeader() {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.cyanAccent.withValues(alpha: 0.08),
-        border: Border.all(color: Colors.cyanAccent.withValues(alpha: 0.3)),
-      ),
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+      color: Colors.cyanAccent.withValues(alpha: 0.06),
       child: Row(
         children: [
-          Text(_tempJob!.icon, style: const TextStyle(fontSize: 28)),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  _tempJob!.title,
-                  style: GoogleFonts.getFont(
-                    'Press Start 2P',
-                    fontSize: 10,
-                    color: Colors.white,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  '${_tempJob!.salary.toInt()} ₽/мес',
-                  style: GoogleFonts.getFont(
-                    'Press Start 2P',
-                    fontSize: 8,
-                    color: Colors.cyanAccent,
-                  ),
-                ),
-              ],
+          Text(_tempJob!.icon, style: const TextStyle(fontSize: 20)),
+          const SizedBox(width: 10),
+          Text(
+            '${_tempJob!.title}  •  ${_jobSalary.toInt()} ₽/мес',
+            style: GoogleFonts.getFont(
+              'Press Start 2P',
+              fontSize: 7,
+              color: Colors.cyanAccent,
             ),
           ),
         ],
@@ -208,46 +371,30 @@ class _PlanningScreenState extends State<PlanningScreen> {
     );
   }
 
-  Widget _sectionTitle(String title) {
-    return Text(
-      title,
-      style: GoogleFonts.getFont(
-        'Press Start 2P',
-        fontSize: 10,
-        color: Colors.yellowAccent,
-      ),
-    );
-  }
-
-  Widget _selectionCard({
-    required String title,
-    required String subtitle,
-    required String icon,
-    required bool isSelected,
-    required VoidCallback onTap,
-  }) {
+  Widget _goalCard(GameGoal goal) {
+    bool isSelected = _tempGoal == goal;
     return GestureDetector(
-      onTap: onTap,
+      onTap: () => setState(() => _tempGoal = goal),
       child: Container(
         margin: const EdgeInsets.only(bottom: 12),
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           color: isSelected ? Colors.white : const Color(0xFF1E1E1E),
           border: Border.all(
-            color: isSelected ? Colors.cyanAccent : Colors.white,
-            width: 2,
+            color: isSelected ? Colors.cyanAccent : Colors.white24,
+            width: isSelected ? 2 : 1,
           ),
         ),
         child: Row(
           children: [
-            Text(icon, style: const TextStyle(fontSize: 24)),
+            const Text('🎯', style: TextStyle(fontSize: 24)),
             const SizedBox(width: 16),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    title,
+                    goal.title,
                     style: TextStyle(
                       fontSize: 10,
                       color: isSelected ? Colors.black : Colors.white,
@@ -258,16 +405,16 @@ class _PlanningScreenState extends State<PlanningScreen> {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(
-                        subtitle,
+                        '${goal.cost.toInt()} ₽  (${goal.monthlyContribution.toInt()} ₽/мес)',
                         style: TextStyle(
-                          fontSize: 8,
+                          fontSize: 7,
                           color: isSelected ? Colors.black54 : Colors.grey,
                         ),
                       ),
                       Text(
-                        '+${(GameState.availableGoals.firstWhere((g) => g.title == title)).pointsReward} баллов',
+                        '+${goal.pointsReward} 🏆',
                         style: TextStyle(
-                          fontSize: 8,
+                          fontSize: 7,
                           color: isSelected
                               ? Colors.black87
                               : Colors.cyanAccent,
@@ -286,7 +433,7 @@ class _PlanningScreenState extends State<PlanningScreen> {
     );
   }
 
-  Widget _actionButton({
+  Widget _navButton({
     required String label,
     required bool active,
     required VoidCallback onPressed,
@@ -357,32 +504,81 @@ class _PlanningScreenState extends State<PlanningScreen> {
     );
   }
 
-  Widget _distributionSummary() {
-    double goalContrib = _tempGoal?.monthlyContribution ?? 0;
+  Widget _summaryBlock({
+    required String icon,
+    required String title,
+    required String value,
+    required String sub,
+  }) {
     return Container(
-      padding: const EdgeInsets.all(12),
-      margin: const EdgeInsets.only(top: 8),
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.05),
-        border: Border.all(color: Colors.white10),
+        color: const Color(0xFF1E1E1E),
+        border: Border.all(color: Colors.white24),
       ),
+      child: Row(
+        children: [
+          Text(icon, style: const TextStyle(fontSize: 28)),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: GoogleFonts.getFont(
+                    'Press Start 2P',
+                    fontSize: 7,
+                    color: Colors.grey,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  value,
+                  style: GoogleFonts.getFont(
+                    'Press Start 2P',
+                    fontSize: 10,
+                    color: Colors.white,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  sub,
+                  style: GoogleFonts.getFont(
+                    'Press Start 2P',
+                    fontSize: 7,
+                    color: Colors.cyanAccent,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _summaryRow(String label, String value, Color color) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Text(
-            'НА ЦЕЛЬ (ФИКС):',
+            label,
             style: GoogleFonts.getFont(
               'Press Start 2P',
-              fontSize: 8,
-              color: Colors.grey,
+              fontSize: 7,
+              color: Colors.white70,
             ),
           ),
           Text(
-            '${goalContrib.toInt()} ₽',
+            value,
             style: GoogleFonts.getFont(
               'Press Start 2P',
-              fontSize: 8,
-              color: Colors.yellowAccent,
+              fontSize: 7,
+              color: color,
             ),
           ),
         ],
