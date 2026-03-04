@@ -65,9 +65,11 @@ class MerchItem {
 enum MealType { economy, standard, luxury, skip }
 
 class GameState with ChangeNotifier {
-  static const double SALARY = 45000;
   static const double RENT = 18000;
   static const double MONTHLY_GOAL = 8000;
+
+  // Dynamic salary based on selected job
+  double get salary => _selectedJob?.salary ?? 45000;
 
   // Financial accounts
   double _walletBalance = 0;
@@ -265,7 +267,7 @@ class GameState with ChangeNotifier {
     _gamePoints = 0;
 
     double goalContrib = _selectedGoal?.monthlyContribution ?? 0;
-    double surplus = SALARY - RENT - goalContrib;
+    double surplus = salary - RENT - goalContrib;
 
     _walletBalance = surplus * (_walletPercentage / 100);
     _emergencyFund = surplus * (_emergencyPercentage / 100);
@@ -305,7 +307,7 @@ class GameState with ChangeNotifier {
     _currentDay = 1;
     _currentMonth++;
 
-    double surplus = SALARY - RENT - (_selectedGoal?.monthlyContribution ?? 0);
+    double surplus = salary - RENT - (_selectedGoal?.monthlyContribution ?? 0);
     _walletBalance += surplus * (_walletPercentage / 100);
     _emergencyFund += surplus * (_emergencyPercentage / 100);
     _mandatoryBalance += surplus * (_mandatoryPercentage / 100);

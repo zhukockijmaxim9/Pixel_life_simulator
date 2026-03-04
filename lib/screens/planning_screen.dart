@@ -11,12 +11,25 @@ class PlanningScreen extends StatefulWidget {
 }
 
 class _PlanningScreenState extends State<PlanningScreen> {
-  // Initial Setup State (Job/Goal)
   Job? _tempJob;
   GameGoal? _tempGoal;
   double _walletPct = 40;
   double _emergencyPct = 30;
   double _mandatoryPct = 30;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Receive job from route arguments
+    final job = ModalRoute.of(context)?.settings.arguments as Job?;
+    if (job != null && _tempJob == null) {
+      _tempJob = job;
+    }
+  }
+
+  double get _jobSalary => _tempJob?.salary ?? 45000;
+  double get _surplus =>
+      _jobSalary - GameState.RENT - (_tempGoal?.monthlyContribution ?? 0.0);
 
   @override
   Widget build(BuildContext context) {
@@ -25,7 +38,7 @@ class _PlanningScreenState extends State<PlanningScreen> {
       appBar: AppBar(
         title: Text(
           'ПЛАНИРОВАНИЕ',
-          style: GoogleFonts.getFont('Press Start 2P', fontSize: 16),
+          style: GoogleFonts.getFont('Press Start 2P', fontSize: 14),
         ),
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -39,7 +52,6 @@ class _PlanningScreenState extends State<PlanningScreen> {
     );
   }
 
-  // --- SETUP FLOW (Job/Goal) ---
   Widget _buildSetupFlow(GameState state, BuildContext context) {
     return Column(
       children: [
@@ -49,19 +61,11 @@ class _PlanningScreenState extends State<PlanningScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _sectionTitle('1. ВЫБЕРИТЕ РАБОТУ'),
-                const SizedBox(height: 16),
-                ...GameState.availableJobs.map(
-                  (job) => _selectionCard(
-                    title: job.title,
-                    subtitle: '${job.salary.toStringAsFixed(0)} ₽/мес',
-                    icon: job.icon,
-                    isSelected: _tempJob == job,
-                    onTap: () => setState(() => _tempJob = job),
-                  ),
-                ),
-                const SizedBox(height: 32),
-                _sectionTitle('2. ВЫБЕРИТЕ ЦЕЛЬ'),
+                // Job header
+                if (_tempJob != null) _jobHeader(),
+                const SizedBox(height: 24),
+
+                _sectionTitle('1. ВЫБЕРИТЕ ЦЕЛЬ'),
                 const SizedBox(height: 16),
                 ...GameState.availableGoals.map(
                   (goal) => _selectionCard(
@@ -73,15 +77,22 @@ class _PlanningScreenState extends State<PlanningScreen> {
                   ),
                 ),
                 const SizedBox(height: 32),
-                _sectionTitle('3. РАСПРЕДЕЛЕНИЕ БЮДЖЕТА'),
+
+                _sectionTitle('2. РАСПРЕДЕЛЕНИЕ БЮДЖЕТА'),
+                const SizedBox(height: 8),
+                Text(
+                  'Остаток после аренды и цели: ${_surplus.toInt()} ₽',
+                  style: GoogleFonts.getFont(
+                    'Press Start 2P',
+                    fontSize: 7,
+                    color: Colors.grey,
+                  ),
+                ),
                 const SizedBox(height: 16),
+
                 _budgetSlider(
                   label: 'КОШЕЛЕК',
                   value: _walletPct,
-                  surplus:
-                      (GameState.SALARY -
-                      GameState.RENT -
-                      (_tempGoal?.monthlyContribution ?? 0.0)),
                   onChanged: (val) {
                     setState(() {
                       double rem = 100 - val;
@@ -100,10 +111,6 @@ class _PlanningScreenState extends State<PlanningScreen> {
                 _budgetSlider(
                   label: 'ПОДУШКА',
                   value: _emergencyPct,
-                  surplus:
-                      (GameState.SALARY -
-                      GameState.RENT -
-                      (_tempGoal?.monthlyContribution ?? 0.0)),
                   onChanged: (val) {
                     setState(() {
                       double rem = 100 - val;
@@ -122,10 +129,6 @@ class _PlanningScreenState extends State<PlanningScreen> {
                 _budgetSlider(
                   label: 'ОБЯЗАТЕЛЬНЫЕ',
                   value: _mandatoryPct,
-                  surplus:
-                      (GameState.SALARY -
-                      GameState.RENT -
-                      (_tempGoal?.monthlyContribution ?? 0.0)),
                   onChanged: (val) {
                     setState(() {
                       double rem = 100 - val;
@@ -161,6 +164,47 @@ class _PlanningScreenState extends State<PlanningScreen> {
           },
         ),
       ],
+    );
+  }
+
+  Widget _jobHeader() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.cyanAccent.withValues(alpha: 0.08),
+        border: Border.all(color: Colors.cyanAccent.withValues(alpha: 0.3)),
+      ),
+      child: Row(
+        children: [
+          Text(_tempJob!.icon, style: const TextStyle(fontSize: 28)),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  _tempJob!.title,
+                  style: GoogleFonts.getFont(
+                    'Press Start 2P',
+                    fontSize: 10,
+                    color: Colors.white,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  '${_tempJob!.salary.toInt()} ₽/мес',
+                  style: GoogleFonts.getFont(
+                    'Press Start 2P',
+                    fontSize: 8,
+                    color: Colors.cyanAccent,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -220,17 +264,16 @@ class _PlanningScreenState extends State<PlanningScreen> {
                           color: isSelected ? Colors.black54 : Colors.grey,
                         ),
                       ),
-                      if (icon == '🎯')
-                        Text(
-                          '+${(GameState.availableGoals.firstWhere((g) => g.title == title)).pointsReward} баллов',
-                          style: TextStyle(
-                            fontSize: 8,
-                            color: isSelected
-                                ? Colors.black87
-                                : Colors.cyanAccent,
-                            fontWeight: FontWeight.bold,
-                          ),
+                      Text(
+                        '+${(GameState.availableGoals.firstWhere((g) => g.title == title)).pointsReward} баллов',
+                        style: TextStyle(
+                          fontSize: 8,
+                          color: isSelected
+                              ? Colors.black87
+                              : Colors.cyanAccent,
+                          fontWeight: FontWeight.bold,
                         ),
+                      ),
                     ],
                   ),
                 ],
@@ -274,10 +317,9 @@ class _PlanningScreenState extends State<PlanningScreen> {
   Widget _budgetSlider({
     required String label,
     required double value,
-    required double surplus,
     required ValueChanged<double> onChanged,
   }) {
-    double moneyAmount = surplus * (value / 100);
+    double moneyAmount = _surplus * (value / 100);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [

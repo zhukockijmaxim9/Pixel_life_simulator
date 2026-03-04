@@ -111,7 +111,7 @@ class _GameScreenState extends State<GameScreen> {
                     label: 'КОШЕЛЕК',
                     value: state.walletPercentage.toDouble(),
                     surplus:
-                        (GameState.SALARY -
+                        (state.salary -
                         GameState.RENT -
                         (state.selectedGoal?.monthlyContribution ?? 0.0)),
                     onChanged: (val) {
@@ -144,7 +144,7 @@ class _GameScreenState extends State<GameScreen> {
                     label: 'ПОДУШКА',
                     value: state.emergencyPercentage.toDouble(),
                     surplus:
-                        (GameState.SALARY -
+                        (state.salary -
                         GameState.RENT -
                         (state.selectedGoal?.monthlyContribution ?? 0.0)),
                     onChanged: (val) {
@@ -175,7 +175,7 @@ class _GameScreenState extends State<GameScreen> {
                     label: 'ОБЯЗАТЕЛЬНЫЕ',
                     value: state.mandatoryPercentage.toDouble(),
                     surplus:
-                        (GameState.SALARY -
+                        (state.salary -
                         GameState.RENT -
                         (state.selectedGoal?.monthlyContribution ?? 0.0)),
                     onChanged: (val) {

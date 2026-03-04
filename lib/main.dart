@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import 'app_state.dart';
 import 'screens/main_menu_screen.dart';
 import 'screens/game_screen.dart';
+import 'screens/job_selection_screen.dart';
 import 'screens/planning_screen.dart';
 import 'screens/shop_screen.dart';
 
@@ -54,6 +55,7 @@ class PixelPurseApp extends StatelessWidget {
       initialRoute: '/',
       routes: {
         '/': (context) => const MainMenuScreen(),
+        '/job_select': (context) => const JobSelectionScreen(),
         '/game': (context) => const GameScreen(),
         '/planning': (context) => const PlanningScreen(),
         '/shop': (context) => const ShopScreen(),

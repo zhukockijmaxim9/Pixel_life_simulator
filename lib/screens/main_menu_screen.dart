@@ -67,7 +67,7 @@ class MainMenuScreen extends StatelessWidget {
                 ),
               ),
               onPressed: () {
-                Navigator.pushNamed(context, '/planning');
+                Navigator.pushNamed(context, '/job_select');
               },
               child: const Text('НАЧАТЬ ИГРУ'),
             ),
