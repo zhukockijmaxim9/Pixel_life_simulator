@@ -58,15 +58,6 @@ class MealDialog extends StatelessWidget {
             walletBalance >= 3500,
             () => onChosen(MealType.luxury),
           ),
-          _mealOption(
-            context,
-            'ПРОПУСТИТЬ',
-            '0 ₽',
-            '-25 настроения\n-2000 ₽ лечение',
-            Colors.grey,
-            true,
-            () => onChosen(MealType.skip),
-          ),
         ],
       ),
     );

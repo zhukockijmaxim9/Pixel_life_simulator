@@ -14,6 +14,8 @@ class _PlanningScreenState extends State<PlanningScreen> {
   // Initial Setup State (Job/Goal)
   Job? _tempJob;
   GameGoal? _tempGoal;
+  double _walletPct = 50;
+  double _emergencyPct = 30;
 
   @override
   Widget build(BuildContext context) {
@@ -69,6 +71,38 @@ class _PlanningScreenState extends State<PlanningScreen> {
                     onTap: () => setState(() => _tempGoal = goal),
                   ),
                 ),
+                const SizedBox(height: 32),
+                _sectionTitle('3. РАСПРЕДЕЛЕНИЕ БЮДЖЕТА'),
+                const SizedBox(height: 16),
+                _budgetSlider(
+                  label: 'КОШЕЛЕК',
+                  value: _walletPct,
+                  surplus:
+                      (GameState.SALARY -
+                      GameState.RENT -
+                      (_tempGoal?.monthlyContribution ?? 0)),
+                  onChanged: (val) {
+                    setState(() {
+                      _walletPct = val;
+                      _emergencyPct = 100 - val;
+                    });
+                  },
+                ),
+                _budgetSlider(
+                  label: 'ПОДУШКА',
+                  value: _emergencyPct,
+                  surplus:
+                      (GameState.SALARY -
+                      GameState.RENT -
+                      (_tempGoal?.monthlyContribution ?? 0)),
+                  onChanged: (val) {
+                    setState(() {
+                      _emergencyPct = val;
+                      _walletPct = 100 - val;
+                    });
+                  },
+                ),
+                _distributionSummary(),
               ],
             ),
           ),
@@ -77,7 +111,12 @@ class _PlanningScreenState extends State<PlanningScreen> {
           label: 'НАЧАТЬ ЖИЗНЬ',
           active: _tempJob != null && _tempGoal != null,
           onPressed: () {
-            state.setupGame(_tempJob!, _tempGoal!);
+            state.setupGame(
+              _tempJob!,
+              _tempGoal!,
+              walletPct: _walletPct.toInt(),
+              emergencyPct: _emergencyPct.toInt(),
+            );
             Navigator.pushReplacementNamed(context, '/game');
           },
         ),
@@ -131,12 +170,28 @@ class _PlanningScreenState extends State<PlanningScreen> {
                     ),
                   ),
                   const SizedBox(height: 4),
-                  Text(
-                    subtitle,
-                    style: TextStyle(
-                      fontSize: 8,
-                      color: isSelected ? Colors.black54 : Colors.grey,
-                    ),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        subtitle,
+                        style: TextStyle(
+                          fontSize: 8,
+                          color: isSelected ? Colors.black54 : Colors.grey,
+                        ),
+                      ),
+                      if (icon == '🎯')
+                        Text(
+                          '+${(GameState.availableGoals.firstWhere((g) => g.title == title)).pointsReward} баллов',
+                          style: TextStyle(
+                            fontSize: 8,
+                            color: isSelected
+                                ? Colors.black87
+                                : Colors.cyanAccent,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                    ],
                   ),
                 ],
               ),
@@ -160,10 +215,95 @@ class _PlanningScreenState extends State<PlanningScreen> {
         child: ElevatedButton(
           style: ElevatedButton.styleFrom(
             backgroundColor: active ? Colors.cyanAccent : Colors.grey,
+            foregroundColor: Colors.black,
+            shape: const RoundedRectangleBorder(
+              borderRadius: BorderRadius.zero,
+            ),
+            padding: const EdgeInsets.symmetric(vertical: 16),
           ),
           onPressed: active ? onPressed : null,
-          child: Text(label),
+          child: Text(
+            label,
+            style: GoogleFonts.getFont('Press Start 2P', fontSize: 12),
+          ),
         ),
+      ),
+    );
+  }
+
+  Widget _budgetSlider({
+    required String label,
+    required double value,
+    required double surplus,
+    required ValueChanged<double> onChanged,
+  }) {
+    double moneyAmount = surplus * (value / 100);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              label,
+              style: GoogleFonts.getFont(
+                'Press Start 2P',
+                fontSize: 8,
+                color: Colors.white70,
+              ),
+            ),
+            Text(
+              '${value.toInt()}% (${moneyAmount.toInt()} ₽)',
+              style: GoogleFonts.getFont(
+                'Press Start 2P',
+                fontSize: 8,
+                color: Colors.cyanAccent,
+              ),
+            ),
+          ],
+        ),
+        Slider(
+          value: value,
+          min: 0,
+          max: 100,
+          divisions: 20,
+          activeColor: Colors.cyanAccent,
+          inactiveColor: Colors.white10,
+          onChanged: onChanged,
+        ),
+      ],
+    );
+  }
+
+  Widget _distributionSummary() {
+    double goalContrib = _tempGoal?.monthlyContribution ?? 0;
+    return Container(
+      padding: const EdgeInsets.all(12),
+      margin: const EdgeInsets.only(top: 8),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.05),
+        border: Border.all(color: Colors.white10),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(
+            'НА ЦЕЛЬ (ФИКС):',
+            style: GoogleFonts.getFont(
+              'Press Start 2P',
+              fontSize: 8,
+              color: Colors.grey,
+            ),
+          ),
+          Text(
+            '${goalContrib.toInt()} ₽',
+            style: GoogleFonts.getFont(
+              'Press Start 2P',
+              fontSize: 8,
+              color: Colors.yellowAccent,
+            ),
+          ),
+        ],
       ),
     );
   }

@@ -39,8 +39,15 @@ class Job {
 class GameGoal {
   final String title;
   final double cost;
+  final int pointsReward;
+  final double monthlyContribution;
 
-  const GameGoal({required this.title, required this.cost});
+  const GameGoal({
+    required this.title,
+    required this.cost,
+    required this.pointsReward,
+    required this.monthlyContribution,
+  });
 }
 
 class MerchItem {
@@ -71,6 +78,11 @@ class GameState with ChangeNotifier {
   int _currentDay = 1;
   int _currentMonth = 1;
   int _gamePoints = 0;
+
+  // Budget distribution (percentages)
+  int _walletPercentage = 50;
+  int _emergencyPercentage = 50;
+  // Goal is now a fixed absolute deduction, not a percentage
 
   int _daysSinceLastMeal = 0;
   int _mealThreshold = Random().nextInt(3) + 2; // Every 2-4 days
@@ -111,6 +123,10 @@ class GameState with ChangeNotifier {
   int get daysToHunger => _mealThreshold - _daysSinceLastMeal;
   List<MerchItem> get inventory => List.unmodifiable(_inventory);
 
+  int get walletPercentage => _walletPercentage;
+  int get emergencyPercentage => _emergencyPercentage;
+  int get goalPercentage => 100 - _walletPercentage - _emergencyPercentage;
+
   void setJob(Job job) {
     _selectedJob = job;
     notifyListeners();
@@ -129,9 +145,24 @@ class GameState with ChangeNotifier {
   ];
 
   static final List<GameGoal> availableGoals = [
-    const GameGoal(title: 'Смартфон', cost: 50000),
-    const GameGoal(title: 'Консоль', cost: 70000),
-    const GameGoal(title: 'Ноутбук', cost: 120000),
+    const GameGoal(
+      title: 'Смартфон',
+      cost: 50000,
+      pointsReward: 500,
+      monthlyContribution: 5000,
+    ),
+    const GameGoal(
+      title: 'Консоль',
+      cost: 70000,
+      pointsReward: 750,
+      monthlyContribution: 7000,
+    ),
+    const GameGoal(
+      title: 'Ноутбук',
+      cost: 120000,
+      pointsReward: 1500,
+      monthlyContribution: 10000,
+    ),
   ];
 
   static final List<MerchItem> shopItems = [
@@ -208,15 +239,30 @@ class GameState with ChangeNotifier {
     ),
   ];
 
-  void setupGame(Job job, GameGoal goal) {
+  void setupGame(
+    Job job,
+    GameGoal goal, {
+    int walletPct = 50,
+    int emergencyPct = 30,
+  }) {
     _selectedJob = job;
     _selectedGoal = goal;
+    _walletPercentage = walletPct;
+    _emergencyPercentage = emergencyPct;
+
     _currentDay = 1;
     _currentMonth = 1;
-    _walletBalance = SALARY - RENT - MONTHLY_GOAL;
-    _emergencyFund = 0;
-    _savingsGoal = MONTHLY_GOAL;
+    _gamePoints = 0;
+
+    double goalContrib = _selectedGoal?.monthlyContribution ?? 0;
+    double surplus = SALARY - RENT - goalContrib;
+
+    _walletBalance = surplus * (_walletPercentage / 100);
+    _emergencyFund = surplus * (_emergencyPercentage / 100);
+    _savingsGoal = goalContrib;
+
     _mood = 80;
+    _gamePoints = 0;
     _isGameOver = false;
     _isWin = false;
     _isPlanningPhase = false;
@@ -226,14 +272,32 @@ class GameState with ChangeNotifier {
     notifyListeners();
   }
 
+  void updateDistribution(int walletPct, int emergencyPct) {
+    _walletPercentage = walletPct;
+    _emergencyPercentage = emergencyPct;
+    notifyListeners();
+  }
+
   void startNewMonth() {
+    // Award points if goal for the month was reached
     if (_isWin) {
+      if (_selectedGoal != null) {
+        _gamePoints += _selectedGoal!.pointsReward;
+        _notificationController.add(
+          'Цель достигнута! +${_selectedGoal!.pointsReward} баллов',
+        );
+      }
       _selectedJob = null; // Unlocks Tier 2 selection in PlanningScreen
     }
+
     _currentDay = 1;
     _currentMonth++;
-    _walletBalance += (SALARY - RENT - MONTHLY_GOAL);
-    _savingsGoal += MONTHLY_GOAL;
+
+    double surplus = SALARY - RENT - (_selectedGoal?.monthlyContribution ?? 0);
+    _walletBalance += surplus * (_walletPercentage / 100);
+    _emergencyFund += surplus * (_emergencyPercentage / 100);
+    _savingsGoal += _selectedGoal?.monthlyContribution ?? 0;
+
     _isPlanningPhase = false;
     _isGameOver = false;
     _isWin = false;

@@ -74,6 +74,217 @@ class _GameScreenState extends State<GameScreen> {
     }
   }
 
+  void _showBudgetDialog(BuildContext context, GameState state) {
+    showDialog(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setState) {
+          return AlertDialog(
+            backgroundColor: const Color(0xFF1E1E1E),
+            shape: const RoundedRectangleBorder(
+              side: BorderSide(color: Colors.white, width: 4),
+              borderRadius: BorderRadius.zero,
+            ),
+            title: Text(
+              'БЮДЖЕТ И ЦЕЛИ',
+              style: GoogleFonts.getFont(
+                'Press Start 2P',
+                fontSize: 12,
+                color: Colors.yellowAccent,
+              ),
+            ),
+            content: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'РАСПРЕДЕЛЕНИЕ:',
+                    style: GoogleFonts.getFont(
+                      'Press Start 2P',
+                      fontSize: 8,
+                      color: Colors.grey,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  _dialogSlider(
+                    label: 'КОШЕЛЕК',
+                    value: state.walletPercentage.toDouble(),
+                    surplus:
+                        (GameState.SALARY -
+                        GameState.RENT -
+                        (state.selectedGoal?.monthlyContribution ?? 0)),
+                    onChanged: (val) {
+                      int wallet = val.toInt();
+                      state.updateDistribution(wallet, 100 - wallet);
+                      setState(() {});
+                    },
+                  ),
+                  _dialogSlider(
+                    label: 'ПОДУШКА',
+                    value: state.emergencyPercentage.toDouble(),
+                    surplus:
+                        (GameState.SALARY -
+                        GameState.RENT -
+                        (state.selectedGoal?.monthlyContribution ?? 0)),
+                    onChanged: (val) {
+                      int emergency = val.toInt();
+                      state.updateDistribution(100 - emergency, emergency);
+                      setState(() {});
+                    },
+                  ),
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    color: Colors.white10,
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          'НА ЦЕЛЬ (ФИКС):',
+                          style: GoogleFonts.getFont(
+                            'Press Start 2P',
+                            fontSize: 6,
+                            color: Colors.grey,
+                          ),
+                        ),
+                        Text(
+                          '${state.selectedGoal?.monthlyContribution.toInt() ?? 0} ₽',
+                          style: GoogleFonts.getFont(
+                            'Press Start 2P',
+                            fontSize: 6,
+                            color: Colors.yellowAccent,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  const SizedBox(height: 24),
+                  Text(
+                    'СМЕНИТЬ ЦЕЛЬ:',
+                    style: GoogleFonts.getFont(
+                      'Press Start 2P',
+                      fontSize: 8,
+                      color: Colors.grey,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  ...GameState.availableGoals.map((goal) {
+                    bool isSelected = state.selectedGoal?.title == goal.title;
+                    return InkWell(
+                      onTap: () {
+                        state.setGoal(goal);
+                        setState(() {});
+                      },
+                      child: Container(
+                        margin: const EdgeInsets.only(bottom: 8),
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          border: Border.all(
+                            color: isSelected
+                                ? Colors.cyanAccent
+                                : Colors.white24,
+                          ),
+                          color: isSelected
+                              ? Colors.cyanAccent.withValues(alpha: 0.1)
+                              : null,
+                        ),
+                        child: Row(
+                          children: [
+                            Text(
+                              isSelected ? '▶' : ' ',
+                              style: const TextStyle(color: Colors.cyanAccent),
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                goal.title,
+                                style: GoogleFonts.getFont(
+                                  'Press Start 2P',
+                                  fontSize: 8,
+                                  color: isSelected
+                                      ? Colors.cyanAccent
+                                      : Colors.white,
+                                ),
+                              ),
+                            ),
+                            Text(
+                              '${goal.cost.toInt()}₽',
+                              style: const TextStyle(
+                                fontSize: 10,
+                                color: Colors.grey,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  }),
+                ],
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: Text(
+                  'ЗАКРЫТЬ',
+                  style: GoogleFonts.getFont(
+                    'Press Start 2P',
+                    fontSize: 10,
+                    color: Colors.cyanAccent,
+                  ),
+                ),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _dialogSlider({
+    required String label,
+    required double value,
+    required double surplus,
+    required ValueChanged<double> onChanged,
+  }) {
+    double moneyAmount = surplus * (value / 100);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              label,
+              style: GoogleFonts.getFont(
+                'Press Start 2P',
+                fontSize: 7,
+                color: Colors.white70,
+              ),
+            ),
+            Text(
+              '${value.toInt()}% (${moneyAmount.toInt()} ₽)',
+              style: GoogleFonts.getFont(
+                'Press Start 2P',
+                fontSize: 7,
+                color: Colors.cyanAccent,
+              ),
+            ),
+          ],
+        ),
+        Slider(
+          value: value,
+          min: 0,
+          max: 100,
+          divisions: 20,
+          activeColor: Colors.cyanAccent,
+          onChanged: onChanged,
+        ),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final state = Provider.of<GameState>(context);
@@ -148,6 +359,15 @@ class _GameScreenState extends State<GameScreen> {
                                       'Press Start 2P',
                                       fontSize: 8,
                                       color: Colors.white,
+                                    ),
+                                  ),
+                                  GestureDetector(
+                                    onTap: () =>
+                                        _showBudgetDialog(context, state),
+                                    child: const Icon(
+                                      Icons.account_balance_wallet,
+                                      color: Colors.cyanAccent,
+                                      size: 16,
                                     ),
                                   ),
                                   GestureDetector(
