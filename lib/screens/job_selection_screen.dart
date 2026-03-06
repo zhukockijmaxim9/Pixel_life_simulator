@@ -231,17 +231,6 @@ class _JobSelectionScreenState extends State<JobSelectionScreen> {
               ),
             ),
           ),
-          const SizedBox(height: 20),
-
-          // Net income hint
-          Text(
-            'После аренды: ${(job.salary - GameState.RENT).toStringAsFixed(0)} ₽',
-            style: GoogleFonts.getFont(
-              'Press Start 2P',
-              fontSize: 7,
-              color: Colors.grey,
-            ),
-          ),
         ],
       ),
     );

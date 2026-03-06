@@ -463,11 +463,11 @@ class _GameScreenState extends State<GameScreen> {
                           'СУДЬБА В ПИКСЕЛЯХ',
                           style: TextStyle(fontSize: 14, color: Colors.white),
                         ),
-                        const Padding(
-                          padding: EdgeInsets.only(top: 10),
+                        Padding(
+                          padding: const EdgeInsets.only(top: 10),
                           child: Text(
-                            'ЦЕЛЬ МЕСЯЦА: 8000 ₽',
-                            style: TextStyle(
+                            'ЦЕЛЬ МЕСЯЦА: ${state.selectedGoal?.cost.toInt() ?? 0} ₽',
+                            style: const TextStyle(
                               fontSize: 8,
                               color: Colors.cyanAccent,
                             ),

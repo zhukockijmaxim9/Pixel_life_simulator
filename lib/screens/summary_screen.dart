@@ -19,13 +19,19 @@ class SummaryScreen extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Text(
-                    state.isWin ? 'ЦЕЛЬ ДОСТИГНУТА!' : 'МЕСЯЦ ЗАВЕРШЁН',
+                    state.isWin
+                        ? 'ЦЕЛЬ ДОСТИГНУТА!'
+                        : (state.mood <= 0
+                              ? 'ИГРА ОКОНЧЕНА'
+                              : 'МЕСЯЦ ЗАВЕРШЕН'),
                     style: GoogleFonts.getFont(
                       'Press Start 2P',
-                      fontSize: 18,
+                      fontSize: 16,
                       color: state.isWin
                           ? Colors.greenAccent
-                          : Colors.yellowAccent,
+                          : (state.mood <= 0
+                                ? Colors.redAccent
+                                : Colors.yellowAccent),
                     ),
                   ),
                   const SizedBox(height: 8),
@@ -95,12 +101,15 @@ class SummaryScreen extends StatelessWidget {
                   Text(
                     state.isWin
                         ? 'Отлично! Вы накопили на цель. Можно выбрать новую!'
-                        : 'Продолжайте копить. Впереди новый месяц!',
+                        : (state.mood <= 0
+                              ? 'Вы полностью выгорели. Ваше психологическое состояние не позволяет продолжать.'
+                              : 'Вам не хватило накоплений до цели. Планируйте бюджет тщательнее!'),
                     textAlign: TextAlign.center,
                     style: GoogleFonts.getFont(
                       'Press Start 2P',
                       fontSize: 8,
                       color: Colors.white,
+                      height: 1.5,
                     ),
                   ),
 
@@ -116,11 +125,25 @@ class SummaryScreen extends StatelessWidget {
                         padding: const EdgeInsets.symmetric(vertical: 16),
                       ),
                       onPressed: () {
-                        state.startNewMonth();
-                        Navigator.pushReplacementNamed(context, '/job_select');
+                        if (state.mood > 0) {
+                          state.startNewMonth();
+                          Navigator.pushReplacementNamed(
+                            context,
+                            '/job_select',
+                          );
+                        } else {
+                          // Loss case (burnout)
+                          Navigator.pushNamedAndRemoveUntil(
+                            context,
+                            '/',
+                            (r) => false,
+                          );
+                        }
                       },
                       child: Text(
-                        'СЛЕДУЮЩИЙ МЕСЯЦ',
+                        state.mood > 0
+                            ? 'СЛЕДУЮЩИЙ МЕСЯЦ'
+                            : 'ПОПРОБОВАТЬ СНОВА',
                         style: GoogleFonts.getFont(
                           'Press Start 2P',
                           fontSize: 10,

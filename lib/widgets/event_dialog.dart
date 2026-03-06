@@ -115,24 +115,42 @@ class _EventDialogState extends State<EventDialog> {
                 ),
               ),
 
-            // RENT info
-            if (widget.event.type == EventType.rent)
+            // RENT or PAYMENT info
+            if (widget.event.type == EventType.rent ||
+                widget.event.type == EventType.payment)
               Container(
                 padding: const EdgeInsets.all(12),
                 color: Colors.redAccent.withValues(alpha: 0.15),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
+                child: Column(
                   children: [
-                    const Text('🏠', style: TextStyle(fontSize: 20)),
-                    const SizedBox(width: 12),
-                    Text(
-                      '${widget.event.moneyImpact.toInt()} ₽',
-                      style: GoogleFonts.getFont(
-                        'Press Start 2P',
-                        fontSize: 14,
-                        color: Colors.redAccent,
-                      ),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Text('💰', style: TextStyle(fontSize: 16)),
+                        const SizedBox(width: 12),
+                        Text(
+                          '${widget.event.moneyImpact.abs().toInt()} ₽',
+                          style: GoogleFonts.getFont(
+                            'Press Start 2P',
+                            fontSize: 14,
+                            color: Colors.redAccent,
+                          ),
+                        ),
+                      ],
                     ),
+                    if (widget.event.type == EventType.payment)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 8),
+                        child: Text(
+                          'Можно оплатить сейчас (+5🎭) или отложить на неделю (-15🎭)',
+                          textAlign: TextAlign.center,
+                          style: GoogleFonts.getFont(
+                            'Press Start 2P',
+                            fontSize: 6,
+                            color: Colors.white70,
+                          ),
+                        ),
+                      ),
                   ],
                 ),
               ),
@@ -225,6 +243,7 @@ class _EventDialogState extends State<EventDialog> {
   Color get _titleColor {
     switch (widget.event.type) {
       case EventType.rent:
+      case EventType.payment:
         return Colors.redAccent;
       case EventType.course:
         return Colors.purpleAccent;
@@ -260,6 +279,15 @@ class _EventDialogState extends State<EventDialog> {
         return [];
       case EventType.rent:
         return [
+          _pixelButton(
+            "ОПЛАТИТЬ",
+            () => widget.onResolve(true),
+            isPrimary: true,
+          ),
+        ];
+      case EventType.payment:
+        return [
+          _pixelButton("ОТЛОЖИТЬ", () => widget.onResolve(false)),
           _pixelButton(
             "ОПЛАТИТЬ",
             () => widget.onResolve(true),
