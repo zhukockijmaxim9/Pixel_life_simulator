@@ -9,6 +9,7 @@ import 'screens/planning_screen.dart';
 import 'screens/shop_screen.dart';
 
 import 'screens/summary_screen.dart';
+import 'screens/budget_settings_screen.dart';
 
 void main() {
   runApp(
@@ -60,6 +61,7 @@ class PixelPurseApp extends StatelessWidget {
         '/planning': (context) => const PlanningScreen(),
         '/shop': (context) => const ShopScreen(),
         '/summary': (context) => const SummaryScreen(),
+        '/budget_settings': (context) => const BudgetSettingsScreen(),
       },
     );
   }

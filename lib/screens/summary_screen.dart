@@ -20,13 +20,13 @@ class SummaryScreen extends StatelessWidget {
                 children: [
                   Text(
                     state.isWin
-                        ? 'ЦЕЛЬ ДОСТИГНУТА!'
+                        ? 'ЦЕЛЬ ДОСТИГНУТА! 🎉'
                         : (state.mood <= 0
-                              ? 'ИГРА ОКОНЧЕНА'
-                              : 'МЕСЯЦ ЗАВЕРШЕН'),
+                              ? 'ИГРА ОКОНЧЕНА 💀'
+                              : 'МЕСЯЦ ЗАВЕРШЕН ⚠️'),
                     style: GoogleFonts.getFont(
                       'Press Start 2P',
-                      fontSize: 16,
+                      fontSize: 14,
                       color: state.isWin
                           ? Colors.greenAccent
                           : (state.mood <= 0
@@ -102,8 +102,8 @@ class SummaryScreen extends StatelessWidget {
                     state.isWin
                         ? 'Отлично! Вы накопили на цель. Можно выбрать новую!'
                         : (state.mood <= 0
-                              ? 'Вы полностью выгорели. Ваше психологическое состояние не позволяет продолжать.'
-                              : 'Вам не хватило накоплений до цели. Планируйте бюджет тщательнее!'),
+                              ? 'ВЫГОРЕНИЕ! 💀\nВаше настроение упало до нуля. Психологическое состояние не позволяет продолжать.'
+                              : 'ЦЕЛЬ НЕ ДОСТИГНУТА! 📉\nВам не хватило накоплений до цели. Планируйте бюджет тщательнее!'),
                     textAlign: TextAlign.center,
                     style: GoogleFonts.getFont(
                       'Press Start 2P',
@@ -120,19 +120,23 @@ class SummaryScreen extends StatelessWidget {
                     width: double.infinity,
                     child: ElevatedButton(
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.cyanAccent,
+                        backgroundColor: state.isWin
+                            ? Colors.greenAccent
+                            : Colors.orangeAccent,
                         foregroundColor: Colors.black,
                         padding: const EdgeInsets.symmetric(vertical: 16),
+                        side: const BorderSide(color: Colors.white, width: 2),
                       ),
                       onPressed: () {
-                        if (state.mood > 0) {
+                        if (state.isWin) {
+                          // Success -> Move to next month and select new job/career
                           state.startNewMonth();
                           Navigator.pushReplacementNamed(
                             context,
                             '/job_select',
                           );
                         } else {
-                          // Loss case (burnout)
+                          // Failure -> Restart from month 1 (Main Menu)
                           Navigator.pushNamedAndRemoveUntil(
                             context,
                             '/',
@@ -141,9 +145,9 @@ class SummaryScreen extends StatelessWidget {
                         }
                       },
                       child: Text(
-                        state.mood > 0
-                            ? 'СЛЕДУЮЩИЙ МЕСЯЦ'
-                            : 'ПОПРОБОВАТЬ СНОВА',
+                        state.isWin
+                            ? 'СЛЕДУЮЩИЙ МЕСЯЦ ➔'
+                            : 'ПОПРОБОВАТЬ СНОВА ↻',
                         style: GoogleFonts.getFont(
                           'Press Start 2P',
                           fontSize: 10,

@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import '../app_state.dart';
+import '../models/job.dart';
+import '../models/goal.dart';
+import '../data/game_data.dart';
 
 class PlanningScreen extends StatefulWidget {
   const PlanningScreen({super.key});
@@ -103,7 +106,7 @@ class _PlanningScreenState extends State<PlanningScreen> {
                   ),
                 ),
                 const SizedBox(height: 20),
-                ...GameState.availableGoals.map((goal) => _goalCard(goal)),
+                ...GameData.availableGoals.map((goal) => _goalCard(goal)),
               ],
             ),
           ),
@@ -137,7 +140,7 @@ class _PlanningScreenState extends State<PlanningScreen> {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'Зарплата: ${_jobSalary.toInt()} ₽  |  Аренда: ${GameState.RENT.toInt()} ₽',
+                  'Зарплата: ${_jobSalary.toInt()} ₽  |  Аренда: ${GameData.RENT.toInt()} ₽',
                   style: GoogleFonts.getFont(
                     'Press Start 2P',
                     fontSize: 7,
@@ -340,7 +343,7 @@ class _PlanningScreenState extends State<PlanningScreen> {
                       const SizedBox(height: 12),
                       _summaryRow(
                         '🏠 Аренда (списание 2-го числа)',
-                        '-${GameState.RENT.toInt()} ₽',
+                        '-${GameData.RENT.toInt()} ₽',
                         Colors.redAccent,
                       ),
                     ],

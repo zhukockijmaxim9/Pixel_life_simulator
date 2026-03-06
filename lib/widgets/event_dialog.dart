@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../models/event.dart';
+import '../models/enums.dart';
 import 'package:provider/provider.dart';
 import '../app_state.dart';
 

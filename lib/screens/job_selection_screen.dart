@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import '../app_state.dart';
+import '../models/job.dart';
 
 class JobSelectionScreen extends StatefulWidget {
   const JobSelectionScreen({super.key});
