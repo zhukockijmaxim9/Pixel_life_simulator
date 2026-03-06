@@ -24,10 +24,10 @@ class GameState with ChangeNotifier {
   int _currentMonth = 1;
   int _gamePoints = 0;
 
-  // Budget distribution (percentages)
-  int _walletPercentage = 40;
-  int _emergencyPercentage = 30;
-  int _mandatoryPercentage = 30;
+  // Budget distribution (absolute amounts in rubles)
+  double _walletAlloc = 10000;
+  double _emergencyAlloc = 5000;
+  double _mandatoryAlloc = 15000;
 
   int _daysSinceLastMeal = 0;
   int _mealThreshold = Random().nextInt(3) + 2;
@@ -84,81 +84,53 @@ class GameState with ChangeNotifier {
   List<String> get completedCourses => List.unmodifiable(_completedCourses);
   List<String> get jobHistory => List.unmodifiable(_jobHistory);
 
-  int get walletPercentage => _walletPercentage;
-  int get emergencyPercentage => _emergencyPercentage;
-  int get mandatoryPercentage => _mandatoryPercentage;
-  int get goalPercentage =>
-      100 - _walletPercentage - _emergencyPercentage - _mandatoryPercentage;
+  double get walletAlloc => _walletAlloc;
+  double get emergencyAlloc => _emergencyAlloc;
+  double get mandatoryAlloc => _mandatoryAlloc;
+  double get goalAlloc => _selectedGoal?.monthlyContribution ?? 0;
 
-  void updateDistribution(int walletPct, int emergencyPct, int mandatoryPct) {
-    // 1. Revert current month's distribution with clamping
-    _walletBalance =
-        (_walletBalance - _currentMonthSurplus * (_walletPercentage / 100))
-            .clamp(0, double.infinity);
-    _emergencyFund =
-        (_emergencyFund - _currentMonthSurplus * (_emergencyPercentage / 100))
-            .clamp(0, double.infinity);
-    _mandatoryBalance =
-        (_mandatoryBalance -
-                _currentMonthSurplus * (_mandatoryPercentage / 100))
-            .clamp(0, double.infinity);
+  void updateDistribution(double wallet, double emergency, double mandatory) {
+    // 1. Update the rules for future months
+    _walletAlloc = wallet;
+    _emergencyAlloc = emergency;
+    _mandatoryAlloc = mandatory;
 
-    // 2. Apply new distribution
-    _walletPercentage = walletPct;
-    _emergencyPercentage = emergencyPct;
-    _mandatoryPercentage = mandatoryPct;
-
-    _walletBalance =
-        (_walletBalance + _currentMonthSurplus * (_walletPercentage / 100))
-            .clamp(0, double.infinity);
-    _emergencyFund =
-        (_emergencyFund + _currentMonthSurplus * (_emergencyPercentage / 100))
-            .clamp(0, double.infinity);
-    _mandatoryBalance =
-        (_mandatoryBalance +
-                _currentMonthSurplus * (_mandatoryPercentage / 100))
-            .clamp(0, double.infinity);
+    // 2. Redistribute CURRENT balances if in game
+    // This fixes the "stale data" bug by redistributing what the user ACTUALLY has now
+    double currentTotal = _walletBalance + _emergencyFund + _mandatoryBalance;
+    if (currentTotal > 0) {
+      double totalAlloc = _walletAlloc + _emergencyAlloc + _mandatoryAlloc;
+      if (totalAlloc > 0) {
+        _walletBalance = currentTotal * (_walletAlloc / totalAlloc);
+        _emergencyFund = currentTotal * (_emergencyAlloc / totalAlloc);
+        _mandatoryBalance = currentTotal * (_mandatoryAlloc / totalAlloc);
+      }
+    }
 
     notifyListeners();
   }
 
   void setGoal(GameGoal goal) {
-    // 1. Revert old goal contribution and surplus distribution with clamping
-    _walletBalance =
-        (_walletBalance - _currentMonthSurplus * (_walletPercentage / 100))
-            .clamp(0, double.infinity);
-    _emergencyFund =
-        (_emergencyFund - _currentMonthSurplus * (_emergencyPercentage / 100))
-            .clamp(0, double.infinity);
-    _mandatoryBalance =
-        (_mandatoryBalance -
-                _currentMonthSurplus * (_mandatoryPercentage / 100))
-            .clamp(0, double.infinity);
-    _savingsGoal = (_savingsGoal - _currentMonthGoalContrib).clamp(
-      0,
-      double.infinity,
-    );
-
-    // 2. Set new goal and recalculate
+    // 1. Calculate how much we need to adjust
+    double oldGoalContrib = _currentMonthGoalContrib;
     _selectedGoal = goal;
     _currentMonthGoalContrib = _selectedGoal?.monthlyContribution ?? 0;
-    _currentMonthSurplus = salary - _currentMonthGoalContrib;
 
-    // 3. Apply new distribution with clamping
-    _walletBalance =
-        (_walletBalance + _currentMonthSurplus * (_walletPercentage / 100))
-            .clamp(0, double.infinity);
-    _emergencyFund =
-        (_emergencyFund + _currentMonthSurplus * (_emergencyPercentage / 100))
-            .clamp(0, double.infinity);
-    _mandatoryBalance =
-        (_mandatoryBalance +
-                _currentMonthSurplus * (_mandatoryPercentage / 100))
-            .clamp(0, double.infinity);
-    _savingsGoal = (_savingsGoal + _currentMonthGoalContrib).clamp(
-      0,
-      double.infinity,
-    );
+    double diff = _currentMonthGoalContrib - oldGoalContrib;
+
+    // 2. Adjust savings and take/give from other accounts proportionally
+    if (diff > 0) {
+      // Need more for goal, take from others
+      _applyFinancialImpact(-diff);
+      _savingsGoal += diff;
+    } else if (diff < 0) {
+      // Need less for goal, give back to wallet (simplification)
+      _savingsGoal += diff; // diff is negative
+      _walletBalance -= diff;
+    }
+
+    // Refresh surplus calculation for current month
+    _currentMonthSurplus = salary - _currentMonthGoalContrib;
 
     notifyListeners();
   }
@@ -202,16 +174,16 @@ class GameState with ChangeNotifier {
   void setupGame(
     Job job,
     GameGoal goal, {
-    int walletPct = 40,
-    int emergencyPct = 30,
-    int mandatoryPct = 30,
+    double walletAlloc = 10000,
+    double emergencyAlloc = 5000,
+    double mandatoryAlloc = 15000,
     bool isNewGame = true,
   }) {
     _selectedJob = job;
     _selectedGoal = goal;
-    _walletPercentage = walletPct;
-    _emergencyPercentage = emergencyPct;
-    _mandatoryPercentage = mandatoryPct;
+    _walletAlloc = walletAlloc;
+    _emergencyAlloc = emergencyAlloc;
+    _mandatoryAlloc = mandatoryAlloc;
 
     if (isNewGame) {
       _currentDay = 1;
@@ -235,13 +207,25 @@ class GameState with ChangeNotifier {
       _jobHistory.add(job.title);
     }
 
-    // Distribute salary for the month
+    // Distribute salary for the month based on absolute rules
     _currentMonthGoalContrib = _selectedGoal?.monthlyContribution ?? 0;
     _currentMonthSurplus = salary - _currentMonthGoalContrib;
 
-    _walletBalance += _currentMonthSurplus * (_walletPercentage / 100);
-    _emergencyFund += _currentMonthSurplus * (_emergencyPercentage / 100);
-    _mandatoryBalance += _currentMonthSurplus * (_mandatoryPercentage / 100);
+    // Use absolute rules or proportional if settings exceed surplus
+    double totalAlloc = _walletAlloc + _emergencyAlloc + _mandatoryAlloc;
+    if (totalAlloc > _currentMonthSurplus && _currentMonthSurplus > 0) {
+      // If rules exceed actual surplus, scale them down proportionally
+      _walletBalance += _currentMonthSurplus * (_walletAlloc / totalAlloc);
+      _emergencyFund += _currentMonthSurplus * (_emergencyAlloc / totalAlloc);
+      _mandatoryBalance +=
+          _currentMonthSurplus * (_mandatoryAlloc / totalAlloc);
+    } else {
+      // Normall case: add the requested amounts
+      _walletBalance += _walletAlloc;
+      _emergencyFund += _emergencyAlloc;
+      _mandatoryBalance += _mandatoryAlloc;
+    }
+
     _savingsGoal += _currentMonthGoalContrib;
     _coursesOffered = false;
 

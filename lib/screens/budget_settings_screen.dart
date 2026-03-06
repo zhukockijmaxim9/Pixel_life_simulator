@@ -14,9 +14,9 @@ class BudgetSettingsScreen extends StatefulWidget {
 
 class _BudgetSettingsScreenState extends State<BudgetSettingsScreen> {
   GameGoal? _selectedGoal;
-  double _walletPct = 0;
-  double _emergencyPct = 0;
-  double _mandatoryPct = 0;
+  double _walletAlloc = 0;
+  double _emergencyAlloc = 0;
+  double _mandatoryAlloc = 0;
   bool _initialized = false;
 
   @override
@@ -25,9 +25,17 @@ class _BudgetSettingsScreenState extends State<BudgetSettingsScreen> {
     if (!_initialized) {
       final state = Provider.of<GameState>(context, listen: false);
       _selectedGoal = state.selectedGoal;
-      _walletPct = state.walletPercentage.toDouble();
-      _emergencyPct = state.emergencyPercentage.toDouble();
-      _mandatoryPct = state.mandatoryPercentage.toDouble();
+      // Use current actual balances if we are mid-game
+      bool midGame = state.currentDay > 1 || state.currentMonth > 1;
+      if (midGame) {
+        _walletAlloc = state.walletBalance;
+        _emergencyAlloc = state.emergencyFund;
+        _mandatoryAlloc = state.mandatoryBalance;
+      } else {
+        _walletAlloc = state.walletAlloc;
+        _emergencyAlloc = state.emergencyAlloc;
+        _mandatoryAlloc = state.mandatoryAlloc;
+      }
       _initialized = true;
     }
   }
@@ -36,10 +44,10 @@ class _BudgetSettingsScreenState extends State<BudgetSettingsScreen> {
   Widget build(BuildContext context) {
     final state = Provider.of<GameState>(context);
 
-    // Calculate current month's distribution preview
-    double currentMonthGoalContrib = _selectedGoal?.monthlyContribution ?? 0;
+    // Calculate available money for redistribution
+    // FIX: Use current ACTUAL liquid total instead of "stale" original salary surplus
     double currentMonthSurplus =
-        (state.selectedJob?.salary ?? 0) - currentMonthGoalContrib;
+        state.walletBalance + state.emergencyFund + state.mandatoryBalance;
 
     return Scaffold(
       backgroundColor: const Color(0xFF121212),
@@ -81,60 +89,70 @@ class _BudgetSettingsScreenState extends State<BudgetSettingsScreen> {
                   const SizedBox(height: 24),
                   _budgetSlider(
                     label: 'КОШЕЛЕК',
-                    value: _walletPct,
-                    surplus: currentMonthSurplus,
+                    value: _walletAlloc,
+                    max: currentMonthSurplus,
                     onChanged: (val) {
-                      setState(() {
-                        double rem = 100 - val;
-                        double oldSum = _emergencyPct + _mandatoryPct;
-                        if (oldSum > 0) {
-                          _emergencyPct = rem * (_emergencyPct / oldSum);
-                          _mandatoryPct = rem * (_mandatoryPct / oldSum);
-                        } else {
-                          _emergencyPct = rem / 2;
-                          _mandatoryPct = rem / 2;
-                        }
-                        _walletPct = val;
-                      });
+                      double remaining =
+                          currentMonthSurplus -
+                          _emergencyAlloc -
+                          _mandatoryAlloc;
+                      setState(() => _walletAlloc = val.clamp(0, remaining));
                     },
                   ),
                   _budgetSlider(
                     label: 'ПОДУШКА',
-                    value: _emergencyPct,
-                    surplus: currentMonthSurplus,
+                    value: _emergencyAlloc,
+                    max: currentMonthSurplus,
                     onChanged: (val) {
-                      setState(() {
-                        double rem = 100 - val;
-                        double oldSum = _walletPct + _mandatoryPct;
-                        if (oldSum > 0) {
-                          _walletPct = rem * (_walletPct / oldSum);
-                          _mandatoryPct = rem * (_mandatoryPct / oldSum);
-                        } else {
-                          _walletPct = rem / 2;
-                          _mandatoryPct = rem / 2;
-                        }
-                        _emergencyPct = val;
-                      });
+                      double remaining =
+                          currentMonthSurplus - _walletAlloc - _mandatoryAlloc;
+                      setState(() => _emergencyAlloc = val.clamp(0, remaining));
                     },
                   ),
                   _budgetSlider(
                     label: 'ОБЯЗАТЕЛЬНЫЕ',
-                    value: _mandatoryPct,
-                    surplus: currentMonthSurplus,
+                    value: _mandatoryAlloc,
+                    max: currentMonthSurplus,
                     onChanged: (val) {
-                      setState(() {
-                        double rem = 100 - val;
-                        double oldSum = _walletPct + _emergencyPct;
-                        if (oldSum > 0) {
-                          _walletPct = rem * (_walletPct / oldSum);
-                          _emergencyPct = rem * (_emergencyPct / oldSum);
-                        } else {
-                          _walletPct = rem / 2;
-                          _emergencyPct = rem / 2;
-                        }
-                        _mandatoryPct = val;
-                      });
+                      double remaining =
+                          currentMonthSurplus - _walletAlloc - _emergencyAlloc;
+                      setState(() => _mandatoryAlloc = val.clamp(0, remaining));
                     },
+                  ),
+                  const SizedBox(height: 16),
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.05),
+                      border: Border.all(color: Colors.white10),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          'ИТОГО РАСПРЕДЕЛЕНО:',
+                          style: GoogleFonts.getFont(
+                            'Press Start 2P',
+                            fontSize: 7,
+                            color: Colors.grey,
+                          ),
+                        ),
+                        Text(
+                          '${(_walletAlloc + _emergencyAlloc + _mandatoryAlloc).toInt()} ₽',
+                          style: GoogleFonts.getFont(
+                            'Press Start 2P',
+                            fontSize: 7,
+                            color:
+                                (_walletAlloc +
+                                        _emergencyAlloc +
+                                        _mandatoryAlloc) >
+                                    currentMonthSurplus
+                                ? Colors.redAccent
+                                : Colors.cyanAccent,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ],
               ),
@@ -202,10 +220,9 @@ class _BudgetSettingsScreenState extends State<BudgetSettingsScreen> {
   Widget _budgetSlider({
     required String label,
     required double value,
-    required double surplus,
+    required double max,
     required ValueChanged<double> onChanged,
   }) {
-    double moneyAmount = surplus * (value / 100);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -221,7 +238,7 @@ class _BudgetSettingsScreenState extends State<BudgetSettingsScreen> {
               ),
             ),
             Text(
-              '${value.toInt()}% (${moneyAmount.toInt()} ₽)',
+              '${value.toInt()} ₽',
               style: GoogleFonts.getFont(
                 'Press Start 2P',
                 fontSize: 7,
@@ -233,35 +250,75 @@ class _BudgetSettingsScreenState extends State<BudgetSettingsScreen> {
         Slider(
           value: value,
           min: 0,
-          max: 100,
-          divisions: 20,
+          max: max,
+          // Remove divisions to allow custom snapping in onChanged
+          divisions: null,
           activeColor: Colors.cyanAccent,
-          onChanged: onChanged,
+          onChanged: (val) {
+            // SNAP TO 500 LOGIC
+            double snapped = (val / 500).round() * 500.0;
+            // Ensure we can always reach the VERY END even if not multiple of 500
+            if ((max - val).abs() < 250) {
+              snapped = max;
+            } else {
+              snapped = snapped.clamp(0.0, max);
+            }
+            onChanged(snapped);
+          },
         ),
       ],
     );
   }
 
   Widget _applyButton(GameState state) {
+    double currentMonthGoalContrib = _selectedGoal?.monthlyContribution ?? 0;
+    double currentMonthSurplus =
+        (state.selectedJob?.salary ?? 0) - currentMonthGoalContrib;
+    double totalAllocated = _walletAlloc + _emergencyAlloc + _mandatoryAlloc;
+    bool isFullyAllocated = (totalAllocated - currentMonthSurplus).abs() < 0.1;
+
     return Padding(
       padding: const EdgeInsets.all(20.0),
       child: SizedBox(
         width: double.infinity,
         child: ElevatedButton(
-          onPressed: () {
-            if (_selectedGoal != null) {
-              state.setGoal(_selectedGoal!);
-            }
-            state.updateDistribution(
-              _walletPct.toInt(),
-              _emergencyPct.toInt(),
-              _mandatoryPct.toInt(),
-            );
-            Navigator.pop(context);
-          },
-          child: Text(
-            'ПРИМЕНИТЬ ИЗМЕНЕНИЯ',
-            style: GoogleFonts.getFont('Press Start 2P', fontSize: 10),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: isFullyAllocated ? Colors.cyanAccent : Colors.grey,
+            foregroundColor: Colors.black,
+          ),
+          onPressed: isFullyAllocated
+              ? () {
+                  if (_selectedGoal != null) {
+                    state.setGoal(_selectedGoal!);
+                  }
+                  state.updateDistribution(
+                    _walletAlloc,
+                    _emergencyAlloc,
+                    _mandatoryAlloc,
+                  );
+                  Navigator.pop(context);
+                }
+              : null,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                'ПРИМЕНИТЬ ИЗМЕНЕНИЯ',
+                style: GoogleFonts.getFont('Press Start 2P', fontSize: 10),
+              ),
+              if (!isFullyAllocated)
+                Padding(
+                  padding: const EdgeInsets.only(top: 4.0),
+                  child: Text(
+                    'РАСПРЕДЕЛИТЕ ВЕСЬ БЮДЖЕТ',
+                    style: GoogleFonts.getFont(
+                      'Press Start 2P',
+                      fontSize: 6,
+                      color: Colors.black54,
+                    ),
+                  ),
+                ),
+            ],
           ),
         ),
       ),

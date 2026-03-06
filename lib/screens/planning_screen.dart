@@ -17,9 +17,9 @@ class _PlanningScreenState extends State<PlanningScreen> {
   int _step = 0; // 0 = Goal, 1 = Budget, 2 = Confirmation
   Job? _tempJob;
   GameGoal? _tempGoal;
-  double _walletPct = 40;
-  double _emergencyPct = 30;
-  double _mandatoryPct = 30;
+  double _walletAlloc = 10000;
+  double _emergencyAlloc = 5000;
+  double _mandatoryAlloc = 15000;
 
   @override
   void didChangeDependencies() {
@@ -168,20 +168,12 @@ class _PlanningScreenState extends State<PlanningScreen> {
                 const SizedBox(height: 24),
                 _budgetSlider(
                   label: 'КОШЕЛЕК',
-                  value: _walletPct,
+                  value: _walletAlloc,
+                  max: _surplus,
                   onChanged: (val) {
-                    setState(() {
-                      double rem = 100 - val;
-                      double oldSum = _emergencyPct + _mandatoryPct;
-                      if (oldSum > 0) {
-                        _emergencyPct = rem * (_emergencyPct / oldSum);
-                        _mandatoryPct = rem * (_mandatoryPct / oldSum);
-                      } else {
-                        _emergencyPct = rem / 2;
-                        _mandatoryPct = rem / 2;
-                      }
-                      _walletPct = val;
-                    });
+                    double remaining =
+                        _surplus - _emergencyAlloc - _mandatoryAlloc;
+                    setState(() => _walletAlloc = val.clamp(0, remaining));
                   },
                 ),
                 _sliderDescription(
@@ -190,20 +182,12 @@ class _PlanningScreenState extends State<PlanningScreen> {
                 const SizedBox(height: 16),
                 _budgetSlider(
                   label: 'ПОДУШКА',
-                  value: _emergencyPct,
+                  value: _emergencyAlloc,
+                  max: _surplus,
                   onChanged: (val) {
-                    setState(() {
-                      double rem = 100 - val;
-                      double oldSum = _walletPct + _mandatoryPct;
-                      if (oldSum > 0) {
-                        _walletPct = rem * (_walletPct / oldSum);
-                        _mandatoryPct = rem * (_mandatoryPct / oldSum);
-                      } else {
-                        _walletPct = rem / 2;
-                        _mandatoryPct = rem / 2;
-                      }
-                      _emergencyPct = val;
-                    });
+                    double remaining =
+                        _surplus - _walletAlloc - _mandatoryAlloc;
+                    setState(() => _emergencyAlloc = val.clamp(0, remaining));
                   },
                 ),
                 _sliderDescription(
@@ -212,20 +196,12 @@ class _PlanningScreenState extends State<PlanningScreen> {
                 const SizedBox(height: 16),
                 _budgetSlider(
                   label: 'ОБЯЗАТЕЛЬНЫЕ ТРАТЫ',
-                  value: _mandatoryPct,
+                  value: _mandatoryAlloc,
+                  max: _surplus,
                   onChanged: (val) {
-                    setState(() {
-                      double rem = 100 - val;
-                      double oldSum = _walletPct + _emergencyPct;
-                      if (oldSum > 0) {
-                        _walletPct = rem * (_walletPct / oldSum);
-                        _emergencyPct = rem * (_emergencyPct / oldSum);
-                      } else {
-                        _walletPct = rem / 2;
-                        _emergencyPct = rem / 2;
-                      }
-                      _mandatoryPct = val;
-                    });
+                    double remaining =
+                        _surplus - _walletAlloc - _emergencyAlloc;
+                    setState(() => _mandatoryAlloc = val.clamp(0, remaining));
                   },
                 ),
                 _sliderDescription(
@@ -237,7 +213,10 @@ class _PlanningScreenState extends State<PlanningScreen> {
         ),
         _navButton(
           label: 'ДАЛЕЕ',
-          active: true,
+          active:
+              (_walletAlloc + _emergencyAlloc + _mandatoryAlloc - _surplus)
+                  .abs() <
+              0.1,
           onPressed: () => setState(() => _step = 2),
         ),
       ],
@@ -246,9 +225,9 @@ class _PlanningScreenState extends State<PlanningScreen> {
 
   // ===== STEP 2: Confirmation =====
   Widget _buildConfirmStep(GameState state) {
-    double walletMoney = _surplus * (_walletPct / 100);
-    double emergencyMoney = _surplus * (_emergencyPct / 100);
-    double mandatoryMoney = _surplus * (_mandatoryPct / 100);
+    double walletMoney = _walletAlloc;
+    double emergencyMoney = _emergencyAlloc;
+    double mandatoryMoney = _mandatoryAlloc;
     double goalMoney = _tempGoal?.monthlyContribution ?? 0;
 
     return Column(
@@ -271,9 +250,9 @@ class _PlanningScreenState extends State<PlanningScreen> {
 
                 // Job
                 _summaryBlock(
-                  icon: _tempJob!.icon,
+                  icon: _tempJob?.icon ?? '💼',
                   title: 'ПРОФЕССИЯ',
-                  value: _tempJob!.title,
+                  value: _tempJob?.title ?? 'Не выбрана',
                   sub: '${_jobSalary.toInt()} ₽/мес',
                 ),
                 const SizedBox(height: 16),
@@ -282,9 +261,9 @@ class _PlanningScreenState extends State<PlanningScreen> {
                 _summaryBlock(
                   icon: '🎯',
                   title: 'ЦЕЛЬ',
-                  value: _tempGoal!.title,
+                  value: _tempGoal?.title ?? 'Не выбрана',
                   sub:
-                      '${_tempGoal!.cost.toInt()} ₽  (${goalMoney.toInt()} ₽/мес)',
+                      '${(_tempGoal?.cost ?? 0).toInt()} ₽  (${goalMoney.toInt()} ₽/мес)',
                 ),
                 const SizedBox(height: 16),
 
@@ -314,7 +293,7 @@ class _PlanningScreenState extends State<PlanningScreen> {
                         Colors.white,
                       ),
                       _summaryRow(
-                        'На цель (${_tempGoal!.title})',
+                        'На цель (${_tempGoal?.title ?? ''})',
                         '-${goalMoney.toInt()} ₽',
                         Colors.yellowAccent,
                       ),
@@ -326,17 +305,17 @@ class _PlanningScreenState extends State<PlanningScreen> {
                       ),
                       const SizedBox(height: 12),
                       _summaryRow(
-                        '  👛 Кошелек (${_walletPct.toInt()}%)',
+                        '  👛 Кошелек',
                         '${walletMoney.toInt()} ₽',
                         Colors.yellowAccent,
                       ),
                       _summaryRow(
-                        '  🛡️ Подушка (${_emergencyPct.toInt()}%)',
+                        '  🛡️ Подушка',
                         '${emergencyMoney.toInt()} ₽',
                         Colors.orangeAccent,
                       ),
                       _summaryRow(
-                        '  📜 Обязат. (${_mandatoryPct.toInt()}%)',
+                        '  📜 Обязат.',
                         '${mandatoryMoney.toInt()} ₽',
                         Colors.lightBlueAccent,
                       ),
@@ -355,17 +334,22 @@ class _PlanningScreenState extends State<PlanningScreen> {
         ),
         _navButton(
           label: 'НАЧАТЬ ЖИЗНЬ',
-          active: true,
+          active:
+              (_walletAlloc + _emergencyAlloc + _mandatoryAlloc - _surplus)
+                  .abs() <
+              0.1,
           onPressed: () {
-            state.setupGame(
-              _tempJob!,
-              _tempGoal!,
-              walletPct: _walletPct.toInt(),
-              emergencyPct: _emergencyPct.toInt(),
-              mandatoryPct: _mandatoryPct.toInt(),
-              isNewGame: state.currentMonth <= 1,
-            );
-            Navigator.pushReplacementNamed(context, '/game');
+            if (_tempJob != null && _tempGoal != null) {
+              state.setupGame(
+                _tempJob!,
+                _tempGoal!,
+                walletAlloc: _walletAlloc,
+                emergencyAlloc: _emergencyAlloc,
+                mandatoryAlloc: _mandatoryAlloc,
+                isNewGame: state.currentMonth <= 1,
+              );
+              Navigator.pushReplacementNamed(context, '/game');
+            }
           },
         ),
       ],
@@ -489,9 +473,9 @@ class _PlanningScreenState extends State<PlanningScreen> {
   Widget _budgetSlider({
     required String label,
     required double value,
+    required double max,
     required ValueChanged<double> onChanged,
   }) {
-    double moneyAmount = _surplus * (value / 100);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -507,7 +491,7 @@ class _PlanningScreenState extends State<PlanningScreen> {
               ),
             ),
             Text(
-              '${value.toInt()}% (${moneyAmount.toInt()} ₽)',
+              '${value.toInt()} ₽',
               style: GoogleFonts.getFont(
                 'Press Start 2P',
                 fontSize: 8,
@@ -519,11 +503,19 @@ class _PlanningScreenState extends State<PlanningScreen> {
         Slider(
           value: value,
           min: 0,
-          max: 100,
-          divisions: 20,
+          max: max,
+          divisions: null, // Allow custom snapping
           activeColor: Colors.cyanAccent,
           inactiveColor: Colors.white10,
-          onChanged: onChanged,
+          onChanged: (val) {
+            double snapped = (val / 500).round() * 500.0;
+            if ((max - val).abs() < 250) {
+              snapped = max;
+            } else {
+              snapped = snapped.clamp(0.0, max);
+            }
+            onChanged(snapped);
+          },
         ),
       ],
     );
