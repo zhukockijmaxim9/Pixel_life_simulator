@@ -580,17 +580,6 @@ class GameState with ChangeNotifier {
       return;
     }
 
-    // Mood debuffs
-    if (_mood < 40 && Random().nextDouble() < 0.2) {
-      _applyFinancialImpact(-1000);
-      _notificationController.add('Ошибка от усталости: -1000₽');
-    }
-    if (_mood <= 0) {
-      _applyFinancialImpact(-4000);
-      _notificationController.add('Нервный срыв: -4000₽');
-      _mood = 40;
-    }
-
     // Check if hunger is triggered
     if (_daysSinceLastMeal >= _mealThreshold) {
       _needsMeal = true;
