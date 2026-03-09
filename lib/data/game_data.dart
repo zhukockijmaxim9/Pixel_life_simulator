@@ -55,22 +55,22 @@ class GameData {
 
   static final List<GameGoal> availableGoals = [
     const GameGoal(
-      title: 'Смартфон',
-      cost: 50000,
+      title: 'Наушники',
+      cost: 5000,
       pointsReward: 500,
       monthlyContribution: 5000,
     ),
     const GameGoal(
-      title: 'Консоль',
-      cost: 70000,
+      title: 'Умные часы',
+      cost: 7000,
       pointsReward: 750,
       monthlyContribution: 7000,
     ),
     const GameGoal(
-      title: 'Ноутбук',
-      cost: 120000,
+      title: 'Планшет',
+      cost: 12000,
       pointsReward: 1500,
-      monthlyContribution: 10000,
+      monthlyContribution: 12000,
     ),
   ];
 
