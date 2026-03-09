@@ -1,5 +1,4 @@
 import 'dart:math';
-import 'dart:async';
 import 'package:flutter/material.dart';
 
 import 'models/enums.dart';
@@ -33,10 +32,6 @@ class GameState with ChangeNotifier {
   int _mealThreshold = Random().nextInt(3) + 2;
   bool _needsMeal = false;
   bool _coursesOffered = false; // day 15 course event fired this month
-
-  final StreamController<String> _notificationController =
-      StreamController<String>.broadcast();
-  Stream<String> get notifications => _notificationController.stream;
 
   Job? _selectedJob;
   GameGoal? _selectedGoal;
@@ -552,7 +547,6 @@ class GameState with ChangeNotifier {
         // Option A: Pay Now
         _applyMandatoryExpense(_currentEvent!.moneyImpact.abs());
         _mood += 5;
-        _notificationController.add('Оплата подтверждена! 😊');
       } else {
         // Option B: Delay
         _pendingPayments.add(
@@ -563,7 +557,6 @@ class GameState with ChangeNotifier {
           ),
         );
         _mood -= 15;
-        _notificationController.add('Платеж перенесен на неделю. 📉');
       }
       _currentEvent = null;
     } else if (_currentEvent!.type == EventType.course) {
@@ -573,9 +566,6 @@ class GameState with ChangeNotifier {
         if (!_completedCourses.contains(courseName)) {
           _completedCourses.add(courseName);
           _applyFinancialImpact(-5000);
-          _notificationController.add(
-            'Курс "$courseName" оплачен! Новая профессия доступна со следующего месяца.',
-          );
         }
       }
       // courseChoice == 2 or null → refuse

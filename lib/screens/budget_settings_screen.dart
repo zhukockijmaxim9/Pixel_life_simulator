@@ -2,8 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import '../app_state.dart';
-import '../models/goal.dart';
-import '../data/game_data.dart';
 
 class BudgetSettingsScreen extends StatefulWidget {
   const BudgetSettingsScreen({super.key});
@@ -13,7 +11,6 @@ class BudgetSettingsScreen extends StatefulWidget {
 }
 
 class _BudgetSettingsScreenState extends State<BudgetSettingsScreen> {
-  GameGoal? _selectedGoal;
   double _walletAlloc = 0;
   double _emergencyAlloc = 0;
   double _mandatoryAlloc = 0;
@@ -24,7 +21,6 @@ class _BudgetSettingsScreenState extends State<BudgetSettingsScreen> {
     super.didChangeDependencies();
     if (!_initialized) {
       final state = Provider.of<GameState>(context, listen: false);
-      _selectedGoal = state.selectedGoal;
       // Use current actual balances if we are mid-game
       bool midGame = state.currentDay > 1 || state.currentMonth > 1;
       if (midGame) {
@@ -71,11 +67,6 @@ class _BudgetSettingsScreenState extends State<BudgetSettingsScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _sectionHeader('ВЫБОР ЦЕЛИ'),
-                  const SizedBox(height: 12),
-                  ...GameData.availableGoals.map((goal) => _goalCard(goal)),
-
-                  const SizedBox(height: 32),
                   _sectionHeader('РАСПРЕДЕЛЕНИЕ ОСТАТКА'),
                   const SizedBox(height: 8),
                   Text(
@@ -158,7 +149,7 @@ class _BudgetSettingsScreenState extends State<BudgetSettingsScreen> {
               ),
             ),
           ),
-          _applyButton(state),
+          _applyButton(state, currentMonthSurplus),
         ],
       ),
     );
@@ -171,48 +162,6 @@ class _BudgetSettingsScreenState extends State<BudgetSettingsScreen> {
         'Press Start 2P',
         fontSize: 10,
         color: Colors.grey,
-      ),
-    );
-  }
-
-  Widget _goalCard(GameGoal goal) {
-    bool isSelected = _selectedGoal?.title == goal.title;
-    return GestureDetector(
-      onTap: () => setState(() => _selectedGoal = goal),
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 8),
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: isSelected
-              ? Colors.cyanAccent.withValues(alpha: 0.1)
-              : const Color(0xFF1E1E1E),
-          border: Border.all(
-            color: isSelected ? Colors.cyanAccent : Colors.white10,
-          ),
-        ),
-        child: Row(
-          children: [
-            Text(
-              isSelected ? '▶' : ' ',
-              style: const TextStyle(color: Colors.cyanAccent),
-            ),
-            const SizedBox(width: 8),
-            Expanded(
-              child: Text(
-                goal.title,
-                style: GoogleFonts.getFont(
-                  'Press Start 2P',
-                  fontSize: 8,
-                  color: isSelected ? Colors.cyanAccent : Colors.white,
-                ),
-              ),
-            ),
-            Text(
-              '${goal.cost.toInt()}₽',
-              style: const TextStyle(fontSize: 10, color: Colors.grey),
-            ),
-          ],
-        ),
       ),
     );
   }
@@ -270,10 +219,7 @@ class _BudgetSettingsScreenState extends State<BudgetSettingsScreen> {
     );
   }
 
-  Widget _applyButton(GameState state) {
-    double currentMonthGoalContrib = _selectedGoal?.monthlyContribution ?? 0;
-    double currentMonthSurplus =
-        (state.selectedJob?.salary ?? 0) - currentMonthGoalContrib;
+  Widget _applyButton(GameState state, double currentMonthSurplus) {
     double totalAllocated = _walletAlloc + _emergencyAlloc + _mandatoryAlloc;
     bool isFullyAllocated = (totalAllocated - currentMonthSurplus).abs() < 0.1;
 
@@ -288,9 +234,6 @@ class _BudgetSettingsScreenState extends State<BudgetSettingsScreen> {
           ),
           onPressed: isFullyAllocated
               ? () {
-                  if (_selectedGoal != null) {
-                    state.setGoal(_selectedGoal!);
-                  }
                   state.updateDistribution(
                     _walletAlloc,
                     _emergencyAlloc,

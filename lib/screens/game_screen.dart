@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'dart:async';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import '../app_state.dart';
@@ -16,33 +15,13 @@ class GameScreen extends StatefulWidget {
 
 class _GameScreenState extends State<GameScreen> {
   bool _isMealShowing = false;
-  StreamSubscription<String>? _notificationSubscription;
-
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      final state = Provider.of<GameState>(context, listen: false);
-      _notificationSubscription = state.notifications.listen((message) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(
-                message,
-                style: GoogleFonts.getFont('Press Start 2P', fontSize: 10),
-              ),
-              backgroundColor: Colors.redAccent,
-              behavior: SnackBarBehavior.floating,
-            ),
-          );
-        }
-      });
-    });
   }
 
   @override
   void dispose() {
-    _notificationSubscription?.cancel();
     super.dispose();
   }
 
