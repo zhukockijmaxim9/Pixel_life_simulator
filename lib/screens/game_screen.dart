@@ -5,6 +5,7 @@ import '../app_state.dart';
 import '../widgets/pixel_progress_bar.dart';
 import '../widgets/event_dialog.dart';
 import '../widgets/meal_dialog.dart';
+import '../widgets/transaction_dialog.dart';
 
 class GameScreen extends StatefulWidget {
   const GameScreen({super.key});
@@ -250,6 +251,14 @@ class _GameScreenState extends State<GameScreen> {
                     quizAnswerIndex: quizAnswerIndex,
                     courseChoice: courseChoice,
                   );
+                },
+              ),
+            if (state.pendingTransaction != null)
+              TransactionDialog(
+                transaction: state.pendingTransaction!,
+                state: state,
+                onReallocate: () {
+                  Navigator.pushNamed(context, '/budget_settings');
                 },
               ),
           ],

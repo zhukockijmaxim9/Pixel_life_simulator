@@ -12,6 +12,20 @@ class PendingPayment {
   });
 }
 
+class PendingTransaction {
+  final String title;
+  final double amount;
+  final AccountType primaryAccount;
+  final double deficit;
+
+  PendingTransaction({
+    required this.title,
+    required this.amount,
+    required this.primaryAccount,
+    required this.deficit,
+  });
+}
+
 class GameEvent {
   final String id;
   final String title;

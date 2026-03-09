@@ -41,6 +41,8 @@ class GameState with ChangeNotifier {
   bool _isPlanningPhase = false;
   final List<MerchItem> _inventory = [];
 
+  PendingTransaction? _pendingTransaction;
+
   // Career progression
   List<String> _completedCourses = [];
   List<String> _jobHistory = [];
@@ -70,6 +72,7 @@ class GameState with ChangeNotifier {
   Job? get selectedJob => _selectedJob;
   GameGoal? get selectedGoal => _selectedGoal;
   GameEvent? get currentEvent => _currentEvent;
+  PendingTransaction? get pendingTransaction => _pendingTransaction;
   bool get isGameOver => _isGameOver;
   bool get isWin => _isWin;
   bool get isPlanningPhase => _isPlanningPhase;
@@ -376,6 +379,53 @@ class GameState with ChangeNotifier {
     _validateStats();
   }
 
+  void resolvePendingTransaction(AccountType source) {
+    if (_pendingTransaction == null) return;
+
+    final transaction = _pendingTransaction!;
+    final deficit = transaction.deficit;
+
+    // Deduct from source
+    switch (source) {
+      case AccountType.wallet:
+        if (_walletBalance >= deficit) {
+          _walletBalance -= deficit;
+        } else {
+          _walletBalance = 0;
+          _isGameOver = true;
+        }
+        break;
+      case AccountType.emergency:
+        if (_emergencyFund >= deficit) {
+          _emergencyFund -= deficit;
+        } else {
+          _emergencyFund = 0;
+          _isGameOver = true;
+        }
+        break;
+      case AccountType.mandatory:
+        if (_mandatoryBalance >= deficit) {
+          _mandatoryBalance -= deficit;
+        } else {
+          _mandatoryBalance = 0;
+          _isGameOver = true;
+        }
+        break;
+      case AccountType.savings:
+        if (_savingsGoal >= deficit) {
+          _savingsGoal -= deficit;
+        } else {
+          _savingsGoal = 0;
+          _isGameOver = true;
+        }
+        break;
+    }
+
+    _pendingTransaction = null;
+    _validateStats();
+    notifyListeners();
+  }
+
   void chooseMeal(MealType type) {
     _needsMeal = false;
     _daysSinceLastMeal = 0;
@@ -405,38 +455,26 @@ class GameState with ChangeNotifier {
   }
 
   void _applyMandatoryExpense(double cost) {
+    String title = "Обязательные расходы";
+    // Check if we are currently in chooseMeal or similar to give better title
+    // But for now, generic is fine or passed as argument.
+    // Let's assume _applyMandatoryExpense is for mandatory.
+
     if (_mandatoryBalance >= cost) {
       _mandatoryBalance -= cost;
       return;
     }
-    cost -= _mandatoryBalance;
+
+    double availableInPrimary = _mandatoryBalance;
+    double deficit = cost - availableInPrimary;
     _mandatoryBalance = 0;
 
-    if (_walletBalance >= cost) {
-      _walletBalance -= cost;
-      return;
-    }
-    cost -= _walletBalance;
-    _walletBalance = 0;
-
-    if (_emergencyFund >= cost) {
-      _emergencyFund -= cost;
-      return;
-    }
-    cost -= _emergencyFund;
-    _emergencyFund = 0;
-
-    if (_savingsGoal >= cost) {
-      _savingsGoal -= cost;
-      return;
-    }
-    cost -= _savingsGoal;
-    _savingsGoal = 0;
-
-    if (cost > 0) {
-      _isGameOver = true;
-      _isWin = false;
-    }
+    _pendingTransaction = PendingTransaction(
+      title: title,
+      amount: cost,
+      primaryAccount: AccountType.mandatory,
+      deficit: deficit,
+    );
   }
 
   // ===== EVENTS =====
@@ -596,42 +634,21 @@ class GameState with ChangeNotifier {
 
     double cost = amount.abs();
 
-    if (_mandatoryBalance >= cost) {
-      _mandatoryBalance -= cost;
-      return;
-    } else {
-      cost -= _mandatoryBalance;
-      _mandatoryBalance = 0;
-    }
-
     if (_walletBalance >= cost) {
       _walletBalance -= cost;
       return;
-    } else {
-      cost -= _walletBalance;
-      _walletBalance = 0;
     }
 
-    if (_emergencyFund >= cost) {
-      _emergencyFund -= cost;
-      return;
-    } else {
-      cost -= _emergencyFund;
-      _emergencyFund = 0;
-    }
+    double availableInPrimary = _walletBalance;
+    double deficit = cost - availableInPrimary;
+    _walletBalance = 0;
 
-    if (_savingsGoal >= cost) {
-      _savingsGoal -= cost;
-      return;
-    } else {
-      cost -= _savingsGoal;
-      _savingsGoal = 0;
-    }
-
-    if (cost > 0) {
-      _isGameOver = true;
-      _isWin = false;
-    }
+    _pendingTransaction = PendingTransaction(
+      title: "Финансовое событие",
+      amount: cost,
+      primaryAccount: AccountType.wallet,
+      deficit: deficit,
+    );
   }
 
   // ===== SHOP =====
