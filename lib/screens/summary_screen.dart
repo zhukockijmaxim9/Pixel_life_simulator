@@ -108,10 +108,24 @@ class SummaryScreen extends StatelessWidget {
                     style: GoogleFonts.getFont(
                       'Press Start 2P',
                       fontSize: 8,
-                      color: Colors.white,
+                      color: Colors.white.withValues(alpha: 0.8),
                       height: 1.5,
                     ),
                   ),
+                  if (state.isWin && state.mood < 60)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 12),
+                      child: Text(
+                        '💡 СОВЕТ: Для повышения в должности нужно иметь настроение выше 60%!',
+                        textAlign: TextAlign.center,
+                        style: GoogleFonts.getFont(
+                          'Press Start 2P',
+                          fontSize: 7,
+                          color: Colors.orangeAccent,
+                          height: 1.4,
+                        ),
+                      ),
+                    ),
 
                   const Spacer(),
 

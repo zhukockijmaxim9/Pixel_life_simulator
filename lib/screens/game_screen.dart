@@ -6,6 +6,7 @@ import '../widgets/pixel_progress_bar.dart';
 import '../widgets/event_dialog.dart';
 import '../widgets/meal_dialog.dart';
 import '../widgets/transaction_dialog.dart';
+import '../widgets/course_shop_dialog.dart';
 
 class GameScreen extends StatefulWidget {
   const GameScreen({super.key});
@@ -52,6 +53,20 @@ class _GameScreenState extends State<GameScreen> {
         });
       });
     }
+  }
+
+  void _showCourseShop(BuildContext context, GameState state) {
+    showDialog(
+      context: context,
+      builder: (context) => CourseShopDialog(
+        walletBalance: state.walletBalance,
+        completedCourses: state.completedCourses,
+        onBuy: (course) {
+          state.buyCourse(course);
+          Navigator.pop(context);
+        },
+      ),
+    );
   }
 
   @override
@@ -155,6 +170,15 @@ class _GameScreenState extends State<GameScreen> {
                                       size: 16,
                                     ),
                                   ),
+                                  if (state.isCourseShopAvailable)
+                                    GestureDetector(
+                                      onTap: () => _showCourseShop(context, state),
+                                      child: const Icon(
+                                        Icons.school,
+                                        color: Colors.greenAccent,
+                                        size: 16,
+                                      ),
+                                    ),
                                 ],
                               ),
                             ],

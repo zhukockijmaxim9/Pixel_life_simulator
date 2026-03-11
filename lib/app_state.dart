@@ -6,6 +6,7 @@ import 'models/job.dart';
 import 'models/goal.dart';
 import 'models/event.dart';
 import 'models/merch_item.dart';
+import 'models/course.dart';
 import 'data/game_data.dart';
 
 class GameState with ChangeNotifier {
@@ -54,6 +55,7 @@ class GameState with ChangeNotifier {
   // Track current month's allocations for redistribution
   double _currentMonthSurplus = 0;
   double _currentMonthGoalContrib = 0;
+  bool _eligibleForPromotion = false;
 
   // Getters
   double get walletBalance => _walletBalance;
@@ -135,37 +137,58 @@ class GameState with ChangeNotifier {
 
   List<Job> getAvailableJobsForMonth() {
     if (_currentMonth <= 1) {
-      return GameData.tier1Jobs;
+      return GameData.allJobs.where((j) => j.tier == 1).toList();
     }
-    List<Job> available = [...GameData.tier1Jobs];
-    for (var job in GameData.tier2Jobs) {
-      // Course-based jobs
-      if (job.requiredCourse != null) {
+
+    List<Job> available = [];
+
+    // Current job's next tier is always a candidate if requirements met
+    for (var job in GameData.allJobs) {
+      // 1. Course-based jobs (Level 2)
+      if (job.requiredCourse != null && job.tier == 2) {
         if (_completedCourses.contains(job.requiredCourse)) {
           available.add(job);
         }
         continue;
       }
-      // Experience-based jobs
+
+      // 2. Experience-based jobs (Level 2+)
       if (job.requiredPreviousJobs.isNotEmpty) {
+        // Must have worked in ANY of the required previous jobs
         bool hasExp = job.requiredPreviousJobs.any(
           (prev) => _jobHistory.contains(prev),
         );
+
         if (hasExp) {
-          available.add(job);
+          // If it's a higher tier than current job, check PROMOTION requirements
+          if (_selectedJob != null && job.tier > _selectedJob!.tier) {
+            if (_eligibleForPromotion) {
+              available.add(job);
+            }
+          } else {
+            // Already reached this tier or it's a lateral/backward move (though tree is mostly linear per branch)
+            available.add(job);
+          }
         }
       }
+
+      // 3. Level 1 jobs are always available as a fallback
+      if (job.tier == 1) {
+        available.add(job);
+      }
     }
-    return available;
+
+    // Remove duplicates and current job
+    return available.toSet().toList();
   }
 
   // Keep backward compat - used in job_selection_screen
-  static List<Job> get availableJobs => GameData.tier1Jobs;
+  static List<Job> get availableJobs =>
+      GameData.allJobs.where((j) => j.tier == 1).toList();
   static List<GameGoal> get availableGoals => GameData.availableGoals;
   static List<MerchItem> get shopItems => GameData.shopItems;
   static List<GameEvent> get allEvents => GameData.allEvents;
   static GameEvent get rentEvent => GameData.rentEvent;
-  static GameEvent get courseEvent => GameData.courseEvent;
   static List<int> get quizDays => GameData.quizDays;
 
   // ===== GAME SETUP =====
@@ -198,6 +221,7 @@ class GameState with ChangeNotifier {
       _inventory.clear();
       _overtimeCount = 0;
       _pendingPayments.clear();
+      _eligibleForPromotion = false;
     }
 
     // Add job to history
@@ -364,12 +388,7 @@ class GameState with ChangeNotifier {
       if (_currentEvent != null) return;
     }
 
-    // Course offer on day 15
-    if (_currentDay == 15 && !_coursesOffered && _currentEvent == null) {
-      _coursesOffered = true;
-      _currentEvent = courseEvent;
-      return;
-    }
+    // Course filter handled by shop UI
 
     // Check if hunger is triggered
     if (_daysSinceLastMeal >= _mealThreshold) {
@@ -539,8 +558,13 @@ class GameState with ChangeNotifier {
     if (goalReached && moodOk) {
       _isWin = true;
       _gamePoints += _selectedGoal!.pointsReward;
+      // Promotion eligibility: Goal reached AND Mood >= 60
+      if (_mood >= 60) {
+        _eligibleForPromotion = true;
+      }
     } else {
       _isWin = false;
+      _eligibleForPromotion = false;
     }
   }
 
@@ -596,17 +620,6 @@ class GameState with ChangeNotifier {
         );
         _mood -= 15;
       }
-      _currentEvent = null;
-    } else if (_currentEvent!.type == EventType.course) {
-      if (courseChoice != null && courseChoice < 2) {
-        // 0 = Бариста, 1 = Бухгалтер
-        String courseName = courseChoice == 0 ? 'Бариста' : 'Бухгалтер';
-        if (!_completedCourses.contains(courseName)) {
-          _completedCourses.add(courseName);
-          _applyFinancialImpact(-5000);
-        }
-      }
-      // courseChoice == 2 or null → refuse
       _currentEvent = null;
     } else {
       if (_currentEvent!.id == 'overtime_offer') {
@@ -677,5 +690,18 @@ class GameState with ChangeNotifier {
     _mood += amount;
     _validateStats();
     notifyListeners();
+  }
+  // ===== COURSE SHOP =====
+  bool get isCourseShopAvailable {
+    return _currentMonth >= 2 && _currentDay <= 15;
+  }
+
+  void buyCourse(Course course) {
+    if (_walletBalance >= course.cost &&
+        !_completedCourses.contains(course.title)) {
+      _walletBalance -= course.cost;
+      _completedCourses.add(course.title);
+      notifyListeners();
+    }
   }
 }
