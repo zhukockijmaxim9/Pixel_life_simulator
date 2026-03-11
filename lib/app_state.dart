@@ -86,6 +86,19 @@ class GameState with ChangeNotifier {
   List<String> get completedCourses => List.unmodifiable(_completedCourses);
   List<String> get jobHistory => List.unmodifiable(_jobHistory);
 
+  bool get hasNewJobOpportunities {
+    if (_selectedJob == null) return true;
+    final currentTier = _selectedJob!.tier;
+    final available = getAvailableJobsForMonth();
+    
+    // It's a "new opportunity" if:
+    // 1. There is a higher tier job available
+    // 2. OR there is a course-unlocked job that we haven't worked in yet
+    return available.any((job) =>
+        job.tier > currentTier ||
+        (job.requiredCourse != null && !_jobHistory.contains(job.title)));
+  }
+
   double get walletAlloc => _walletAlloc;
   double get emergencyAlloc => _emergencyAlloc;
   double get mandatoryAlloc => _mandatoryAlloc;
@@ -138,7 +151,8 @@ class GameState with ChangeNotifier {
   }
 
   List<Job> getAvailableJobsForMonth() {
-    if (_currentMonth <= 1) {
+    // If we haven't picked a job yet (start of game), show Tier 1 fallback
+    if (_selectedJob == null && _jobHistory.isEmpty) {
       return GameData.allJobs.where((j) => j.tier == 1).toList();
     }
 
@@ -227,6 +241,9 @@ class GameState with ChangeNotifier {
       _quizzesShownThisMonth = 0;
       _pendingQuizIds = []; // Reset quiz stack for new game
     }
+    
+    // Always reset promotion eligibility once a job is "confirmed" for the month
+    _eligibleForPromotion = false;
 
     // Add job to history
     if (!_jobHistory.contains(job.title)) {
@@ -580,6 +597,8 @@ class GameState with ChangeNotifier {
       }
     } else {
       _isWin = false;
+      // Note: We don't reset _eligibleForPromotion to false here if it's already true from previous achievements?
+      // Actually, promotion is usually per-month. So if you fail this month, you lose eligibility for THIS month's promotion.
       _eligibleForPromotion = false;
     }
   }

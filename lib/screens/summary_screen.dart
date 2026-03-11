@@ -143,12 +143,25 @@ class SummaryScreen extends StatelessWidget {
                       ),
                       onPressed: () {
                         if (state.isWin) {
-                          // Success -> Move to next month and select new job/career
+                          // Success -> Move to next month
+                          final currentJob = state.selectedJob;
+                          final hasNew = state.hasNewJobOpportunities;
+                          
                           state.startNewMonth();
-                          Navigator.pushReplacementNamed(
-                            context,
-                            '/job_select',
-                          );
+                          
+                          if (hasNew) {
+                            Navigator.pushReplacementNamed(
+                              context,
+                              '/job_select',
+                            );
+                          } else {
+                            // Skip job selection, go straight to planning with current job
+                            Navigator.pushReplacementNamed(
+                              context,
+                              '/planning',
+                              arguments: currentJob,
+                            );
+                          }
                         } else {
                           // Failure -> Restart from month 1 (Main Menu)
                           Navigator.pushNamedAndRemoveUntil(
