@@ -8,36 +8,28 @@ import 'models/event.dart';
 import 'models/merch_item.dart';
 import 'models/course.dart';
 import 'data/game_data.dart';
+import 'domain/managers/career_manager.dart';
+import 'domain/managers/finance_manager.dart';
 
 class GameState with ChangeNotifier {
-  // Dynamic salary based on selected job
-  double get salary => _selectedJob?.salary ?? 30000;
+  final CareerManager _career = CareerManager();
+  final FinanceManager _finance = FinanceManager();
 
-  // Financial accounts
-  double _walletBalance = 0;
-  double _emergencyFund = 0;
-  double _mandatoryBalance = 0;
-  double _savingsGoal = 0;
+  // Dynamic salary based on selected job
+  double get salary => _career.selectedJob?.salary ?? 30000;
 
   double _mood = 60;
   int _currentDay = 1;
   int _currentMonth = 1;
   int _gamePoints = 0;
 
-  // Budget distribution (absolute amounts in rubles)
-  double _walletAlloc = 10000;
-  double _emergencyAlloc = 5000;
-  double _mandatoryAlloc = 15000;
-
   int _daysSinceLastMeal = 0;
   int _mealThreshold = Random().nextInt(3) + 2;
   bool _needsMeal = false;
-  bool _coursesOffered = false; // day 15 course event fired this month
+
   int _quizzesShownThisMonth = 0;
   List<String> _pendingQuizIds = [];
 
-  Job? _selectedJob;
-  GameGoal? _selectedGoal;
   GameEvent? _currentEvent;
   bool _isGameOver = false;
   bool _isWin = false;
@@ -46,35 +38,34 @@ class GameState with ChangeNotifier {
 
   PendingTransaction? _pendingTransaction;
 
-  // Career progression
-  List<String> _completedCourses = [];
-  List<String> _jobHistory = [];
-
   final Map<String, int> _eventHistory = {};
   int _overtimeCount = 0;
   final List<PendingPayment> _pendingPayments = [];
 
-  // Track current month's allocations for redistribution
   double _currentMonthSurplus = 0;
   double _currentMonthGoalContrib = 0;
-  bool _eligibleForPromotion = false;
 
-  // Getters
-  double get walletBalance => _walletBalance;
-  double get emergencyFund => _emergencyFund;
-  double get mandatoryBalance => _mandatoryBalance;
-  double get savingsGoal => _savingsGoal;
-  double get totalMoney =>
-      _walletBalance + _emergencyFund + _mandatoryBalance + _savingsGoal;
+  // Getters (delegated or direct)
+  double get walletBalance => _finance.walletBalance;
+  double get emergencyFund => _finance.emergencyFund;
+  double get mandatoryBalance => _finance.mandatoryBalance;
+  double get savingsGoal => _finance.savingsGoal;
+  double get totalMoney => _finance.getTotalMoney();
 
-  double get foodBudget => _walletBalance + _mandatoryBalance;
+  double get foodBudget => _finance.walletBalance + _finance.mandatoryBalance;
 
   double get mood => _mood;
   int get currentDay => _currentDay;
   int get currentMonth => _currentMonth;
   int get gamePoints => _gamePoints;
-  Job? get selectedJob => _selectedJob;
-  GameGoal? get selectedGoal => _selectedGoal;
+  Job? get selectedJob => _career.selectedJob;
+  GameGoal? get selectedGoal {
+    // Note: selectedGoal was not in FinanceManager as it's a model reference, not a balance
+    // But savingsGoal is. We'll keep _selectedGoal here for simplicity unless we want a GoalManager.
+    return _selectedGoal;
+  }
+  GameGoal? _selectedGoal;
+
   GameEvent? get currentEvent => _currentEvent;
   PendingTransaction? get pendingTransaction => _pendingTransaction;
   bool get isGameOver => _isGameOver;
@@ -83,131 +74,49 @@ class GameState with ChangeNotifier {
   bool get needsMeal => _needsMeal;
   int get daysToHunger => _mealThreshold - _daysSinceLastMeal;
   List<MerchItem> get inventory => List.unmodifiable(_inventory);
-  List<String> get completedCourses => List.unmodifiable(_completedCourses);
-  List<String> get jobHistory => List.unmodifiable(_jobHistory);
+  List<String> get completedCourses => List.unmodifiable(_career.completedCourses);
+  List<String> get jobHistory => List.unmodifiable(_career.jobHistory);
 
-  bool get hasNewJobOpportunities {
-    if (_selectedJob == null) return true;
-    final currentTier = _selectedJob!.tier;
-    final available = getAvailableJobsForMonth();
-    
-    // It's a "new opportunity" if:
-    // 1. There is a higher tier job available
-    // 2. OR there is a course-unlocked job that we haven't worked in yet
-    return available.any((job) =>
-        job.tier > currentTier ||
-        (job.requiredCourse != null && !_jobHistory.contains(job.title)));
-  }
+  bool get hasNewJobOpportunities => _career.hasNewOpportunities();
 
-  double get walletAlloc => _walletAlloc;
-  double get emergencyAlloc => _emergencyAlloc;
-  double get mandatoryAlloc => _mandatoryAlloc;
+  double get walletAlloc => _finance.walletAlloc;
+  double get emergencyAlloc => _finance.emergencyAlloc;
+  double get mandatoryAlloc => _finance.mandatoryAlloc;
   double get goalAlloc => _selectedGoal?.monthlyContribution ?? 0;
 
   void updateDistribution(double wallet, double emergency, double mandatory) {
-    // 1. Update the rules for future months
-    _walletAlloc = wallet;
-    _emergencyAlloc = emergency;
-    _mandatoryAlloc = mandatory;
-
-    // 2. Redistribute CURRENT balances if in game
-    // This fixes the "stale data" bug by redistributing what the user ACTUALLY has now
-    double currentTotal = _walletBalance + _emergencyFund + _mandatoryBalance;
-    if (currentTotal > 0) {
-      double totalAlloc = _walletAlloc + _emergencyAlloc + _mandatoryAlloc;
-      if (totalAlloc > 0) {
-        _walletBalance = currentTotal * (_walletAlloc / totalAlloc);
-        _emergencyFund = currentTotal * (_emergencyAlloc / totalAlloc);
-        _mandatoryBalance = currentTotal * (_mandatoryAlloc / totalAlloc);
-      }
-    }
-
+    _finance.updateDistribution(wallet, emergency, mandatory);
     notifyListeners();
   }
 
   void setGoal(GameGoal goal) {
-    // 1. Calculate how much we need to adjust
     double oldGoalContrib = _currentMonthGoalContrib;
     _selectedGoal = goal;
     _currentMonthGoalContrib = _selectedGoal?.monthlyContribution ?? 0;
 
     double diff = _currentMonthGoalContrib - oldGoalContrib;
 
-    // 2. Adjust savings and take/give from other accounts proportionally
     if (diff > 0) {
-      // Need more for goal, take from others
       _applyFinancialImpact(-diff);
-      _savingsGoal += diff;
+      _finance.savingsGoal += diff;
     } else if (diff < 0) {
-      // Need less for goal, give back to wallet (simplification)
-      _savingsGoal += diff; // diff is negative
-      _walletBalance -= diff;
+      _finance.savingsGoal += diff;
+      _finance.walletBalance -= diff;
     }
 
-    // Refresh surplus calculation for current month
     _currentMonthSurplus = salary - _currentMonthGoalContrib;
-
     notifyListeners();
   }
 
-  List<Job> getAvailableJobsForMonth() {
-    // If we haven't picked a job yet (start of game), show Tier 1 fallback
-    if (_selectedJob == null && _jobHistory.isEmpty) {
-      return GameData.allJobs.where((j) => j.tier == 1).toList();
-    }
+  List<Job> getAvailableJobsForMonth() => _career.getAvailableJobs();
 
-    List<Job> available = [];
-
-    // Current job's next tier is always a candidate if requirements met
-    for (var job in GameData.allJobs) {
-      // 1. Course-based jobs (Level 2)
-      if (job.requiredCourse != null && job.tier == 2) {
-        if (_completedCourses.contains(job.requiredCourse)) {
-          available.add(job);
-        }
-        continue;
-      }
-
-      // 2. Experience-based jobs (Level 2+)
-      if (job.requiredPreviousJobs.isNotEmpty) {
-        // Must have worked in ANY of the required previous jobs
-        bool hasExp = job.requiredPreviousJobs.any(
-          (prev) => _jobHistory.contains(prev),
-        );
-
-        if (hasExp) {
-          // If it's a higher tier than current job, check PROMOTION requirements
-          if (_selectedJob != null && job.tier > _selectedJob!.tier) {
-            if (_eligibleForPromotion) {
-              available.add(job);
-            }
-          } else {
-            // Already reached this tier or it's a lateral/backward move (though tree is mostly linear per branch)
-            available.add(job);
-          }
-        }
-      }
-
-      // 3. Level 1 jobs are always available as a fallback
-      if (job.tier == 1) {
-        available.add(job);
-      }
-    }
-
-    // Remove duplicates and current job
-    return available.toSet().toList();
-  }
-
-  // Keep backward compat - used in job_selection_screen
-  static List<Job> get availableJobs =>
-      GameData.allJobs.where((j) => j.tier == 1).toList();
+  static List<Job> get availableJobs => GameData.allJobs.where((j) => j.tier == 1).toList();
   static List<GameGoal> get availableGoals => GameData.availableGoals;
   static List<MerchItem> get shopItems => GameData.shopItems;
   static List<GameEvent> get allEvents => GameData.allEvents;
   static GameEvent get rentEvent => GameData.rentEvent;
   static List<int> get quizDays => GameData.quizDays;
 
-  // ===== GAME SETUP =====
   void setupGame(
     Job job,
     GameGoal goal, {
@@ -216,62 +125,45 @@ class GameState with ChangeNotifier {
     double mandatoryAlloc = 15000,
     bool isNewGame = true,
   }) {
-    _selectedJob = job;
-    _selectedGoal = goal;
-    _walletAlloc = walletAlloc;
-    _emergencyAlloc = emergencyAlloc;
-    _mandatoryAlloc = mandatoryAlloc;
-
     if (isNewGame) {
       _currentDay = 1;
       _currentMonth = 1;
       _gamePoints = 0;
-      _walletBalance = 0;
-      _emergencyFund = 0;
-      _mandatoryBalance = 0;
-      _savingsGoal = 0;
+      _finance.resetBalances();
       _mood = 60;
-      _completedCourses = [];
-      _jobHistory = [];
+      _career.reset(job);
       _eventHistory.clear();
       _inventory.clear();
       _overtimeCount = 0;
       _pendingPayments.clear();
-      _eligibleForPromotion = false;
       _quizzesShownThisMonth = 0;
-      _pendingQuizIds = []; // Reset quiz stack for new game
+      _pendingQuizIds = [];
+    } else {
+      _career.selectedJob = job;
+      _career.eligibleForPromotion = false;
+      _career.addJobToHistory(job);
     }
     
-    // Always reset promotion eligibility once a job is "confirmed" for the month
-    _eligibleForPromotion = false;
+    _selectedGoal = goal;
+    _finance.walletAlloc = walletAlloc;
+    _finance.emergencyAlloc = emergencyAlloc;
+    _finance.mandatoryAlloc = mandatoryAlloc;
 
-    // Add job to history
-    if (!_jobHistory.contains(job.title)) {
-      _jobHistory.add(job.title);
-    }
-
-    // Distribute salary for the month based on absolute rules
     _currentMonthGoalContrib = _selectedGoal?.monthlyContribution ?? 0;
     _currentMonthSurplus = salary - _currentMonthGoalContrib;
 
-    // Use absolute rules or proportional if settings exceed surplus
-    double totalAlloc = _walletAlloc + _emergencyAlloc + _mandatoryAlloc;
+    double totalAlloc = _finance.walletAlloc + _finance.emergencyAlloc + _finance.mandatoryAlloc;
     if (totalAlloc > _currentMonthSurplus && _currentMonthSurplus > 0) {
-      // If rules exceed actual surplus, scale them down proportionally
-      _walletBalance += _currentMonthSurplus * (_walletAlloc / totalAlloc);
-      _emergencyFund += _currentMonthSurplus * (_emergencyAlloc / totalAlloc);
-      _mandatoryBalance +=
-          _currentMonthSurplus * (_mandatoryAlloc / totalAlloc);
+      _finance.walletBalance += _currentMonthSurplus * (_finance.walletAlloc / totalAlloc);
+      _finance.emergencyFund += _currentMonthSurplus * (_finance.emergencyAlloc / totalAlloc);
+      _finance.mandatoryBalance += _currentMonthSurplus * (_finance.mandatoryAlloc / totalAlloc);
     } else {
-      // Normall case: add the requested amounts
-      _walletBalance += _walletAlloc;
-      _emergencyFund += _emergencyAlloc;
-      _mandatoryBalance += _mandatoryAlloc;
+      _finance.walletBalance += _finance.walletAlloc;
+      _finance.emergencyFund += _finance.emergencyAlloc;
+      _finance.mandatoryBalance += _finance.mandatoryAlloc;
     }
 
-    _savingsGoal += _currentMonthGoalContrib;
-    _coursesOffered = false;
-
+    _finance.savingsGoal += _currentMonthGoalContrib;
     _isGameOver = false;
     _isWin = false;
     _isPlanningPhase = false;
@@ -281,10 +173,9 @@ class GameState with ChangeNotifier {
   }
 
   void startNewMonth() {
-    // 1. Deduct cost of completed goal if won
     if (_isWin && _selectedGoal != null) {
-      _savingsGoal -= _selectedGoal!.cost;
-      if (_savingsGoal < 0) _savingsGoal = 0;
+      _finance.savingsGoal -= _selectedGoal!.cost;
+      if (_finance.savingsGoal < 0) _finance.savingsGoal = 0;
     }
 
     _currentDay = 1;
@@ -292,7 +183,6 @@ class GameState with ChangeNotifier {
     _isPlanningPhase = true;
     _isGameOver = false;
     _isWin = false;
-    _coursesOffered = false;
     _daysSinceLastMeal = 0;
     _overtimeCount = 0;
     _pendingPayments.clear();
@@ -301,7 +191,6 @@ class GameState with ChangeNotifier {
     notifyListeners();
   }
 
-  // ===== GAME LOOP =====
   Future<void> nextTurn() async {
     if (_isGameOver || _isPlanningPhase || _needsMeal) return;
     if (_currentEvent != null) return;
@@ -320,7 +209,6 @@ class GameState with ChangeNotifier {
       await Future.delayed(const Duration(milliseconds: 400));
     }
 
-    // Always trigger a random event after fast-forward (if no event/meal pending)
     if (!_needsMeal && !_isGameOver && _currentEvent == null) {
       _triggerRandomEvent();
       notifyListeners();
@@ -337,7 +225,6 @@ class GameState with ChangeNotifier {
       return;
     }
 
-    // Check for pending payments due TODAY or overdue
     for (int i = 0; i < _pendingPayments.length; i++) {
       if (_currentDay >= _pendingPayments[i].dueDate) {
         PendingPayment pay = _pendingPayments.removeAt(i);
@@ -353,68 +240,39 @@ class GameState with ChangeNotifier {
       }
     }
 
-    // Overtime hook: 1 day before any payment is due, if wallet is low
     if (_overtimeCount < 2 && _currentEvent == null) {
-      bool paymentSoon = _pendingPayments.any(
-        (p) => p.dueDate == _currentDay + 1,
-      );
-      // Also check the initial scheduled days (2, 5, 10)
+      bool paymentSoon = _pendingPayments.any((p) => p.dueDate == _currentDay + 1);
       if (!paymentSoon) {
         if ([1, 4, 9].contains(_currentDay)) paymentSoon = true;
       }
 
-      if (paymentSoon && _walletBalance < 2000) {
+      if (paymentSoon && _finance.walletBalance < 2000) {
         _currentEvent = allEvents.firstWhere((e) => e.id == 'overtime_offer');
         _overtimeCount++;
         return;
       }
     }
 
-    // Fixed schedule for initial payments
     if (_currentEvent == null) {
       if (_currentDay == 2) {
-        _currentEvent = const GameEvent(
-          id: 'initial_rent',
-          title: 'Аренда жилья',
-          description: 'Хозяин квартиры ждёт оплаты.',
-          type: EventType.payment,
-          moneyImpact: -7000,
-        );
+        _currentEvent = const GameEvent(id: 'initial_rent', title: 'Аренда жилья', description: 'Хозяин квартиры ждёт оплаты.', type: EventType.payment, moneyImpact: -7000);
         return;
       }
       if (_currentDay == 5) {
-        _currentEvent = const GameEvent(
-          id: 'initial_services',
-          title: 'Коммунальные услуги',
-          description: 'Пришли счета за свет, воду и интернет.',
-          type: EventType.payment,
-          moneyImpact: -4000,
-        );
+        _currentEvent = const GameEvent(id: 'initial_services', title: 'Коммунальные услуги', description: 'Пришли счета за свет, воду и интернет.', type: EventType.payment, moneyImpact: -4000);
         return;
       }
       if (_currentDay == 10) {
-        _currentEvent = const GameEvent(
-          id: 'initial_transport',
-          title: 'Транспортная карта',
-          description: 'Пора продлить проездной на месяц.',
-          type: EventType.payment,
-          moneyImpact: -3000, // Corrected from 300 to 3000
-        );
+        _currentEvent = const GameEvent(id: 'initial_transport', title: 'Транспортная карта', description: 'Пора продлить проездной на месяц.', type: EventType.payment, moneyImpact: -3000);
         return;
       }
     }
 
-    // Quiz on scheduled days (9, 19, 29)
-    if (quizDays.contains(_currentDay) &&
-        _currentEvent == null &&
-        _quizzesShownThisMonth < 2) {
+    if (quizDays.contains(_currentDay) && _currentEvent == null && _quizzesShownThisMonth < 2) {
       _triggerQuiz();
       if (_currentEvent != null) return;
     }
 
-    // Course filter handled by shop UI
-
-    // Check if hunger is triggered
     if (_daysSinceLastMeal >= _mealThreshold) {
       _needsMeal = true;
     }
@@ -425,42 +283,20 @@ class GameState with ChangeNotifier {
   void resolvePendingTransaction(AccountType source) {
     if (_pendingTransaction == null) return;
 
-    final transaction = _pendingTransaction!;
-    final deficit = transaction.deficit;
+    final deficit = _pendingTransaction!.deficit;
 
-    // Deduct from source
     switch (source) {
       case AccountType.wallet:
-        if (_walletBalance >= deficit) {
-          _walletBalance -= deficit;
-        } else {
-          _walletBalance = 0;
-          _isGameOver = true;
-        }
+        if (_finance.walletBalance >= deficit) { _finance.walletBalance -= deficit; } else { _finance.walletBalance = 0; _isGameOver = true; }
         break;
       case AccountType.emergency:
-        if (_emergencyFund >= deficit) {
-          _emergencyFund -= deficit;
-        } else {
-          _emergencyFund = 0;
-          _isGameOver = true;
-        }
+        if (_finance.emergencyFund >= deficit) { _finance.emergencyFund -= deficit; } else { _finance.emergencyFund = 0; _isGameOver = true; }
         break;
       case AccountType.mandatory:
-        if (_mandatoryBalance >= deficit) {
-          _mandatoryBalance -= deficit;
-        } else {
-          _mandatoryBalance = 0;
-          _isGameOver = true;
-        }
+        if (_finance.mandatoryBalance >= deficit) { _finance.mandatoryBalance -= deficit; } else { _finance.mandatoryBalance = 0; _isGameOver = true; }
         break;
       case AccountType.savings:
-        if (_savingsGoal >= deficit) {
-          _savingsGoal -= deficit;
-        } else {
-          _savingsGoal = 0;
-          _isGameOver = true;
-        }
+        if (_finance.savingsGoal >= deficit) { _finance.savingsGoal -= deficit; } else { _finance.savingsGoal = 0; _isGameOver = true; }
         break;
     }
 
@@ -475,22 +311,10 @@ class GameState with ChangeNotifier {
     _mealThreshold = Random().nextInt(3) + 2;
 
     switch (type) {
-      case MealType.economy:
-        _applyMandatoryExpense(600);
-        _mood -= 10;
-        break;
-      case MealType.standard:
-        _applyMandatoryExpense(1500);
-        _mood += 2;
-        break;
-      case MealType.luxury:
-        _applyMandatoryExpense(3500);
-        _mood += 15;
-        break;
-      case MealType.skip:
-        _mood -= 25;
-        _applyMandatoryExpense(2000);
-        break;
+      case MealType.economy: _applyMandatoryExpense(600); _mood -= 10; break;
+      case MealType.standard: _applyMandatoryExpense(1500); _mood += 2; break;
+      case MealType.luxury: _applyMandatoryExpense(3500); _mood += 15; break;
+      case MealType.skip: _mood -= 25; _applyMandatoryExpense(2000); break;
     }
 
     _validateStats();
@@ -498,60 +322,36 @@ class GameState with ChangeNotifier {
   }
 
   void _applyMandatoryExpense(double cost) {
-    String title = "Обязательные расходы";
-    // Check if we are currently in chooseMeal or similar to give better title
-    // But for now, generic is fine or passed as argument.
-    // Let's assume _applyMandatoryExpense is for mandatory.
-
-    if (_mandatoryBalance >= cost) {
-      _mandatoryBalance -= cost;
+    if (_finance.mandatoryBalance >= cost) {
+      _finance.mandatoryBalance -= cost;
       return;
     }
 
-    double availableInPrimary = _mandatoryBalance;
-    double deficit = cost - availableInPrimary;
-    _mandatoryBalance = 0;
+    double deficit = cost - _finance.mandatoryBalance;
+    _finance.mandatoryBalance = 0;
 
     _pendingTransaction = PendingTransaction(
-      title: title,
+      title: "Обязательные расходы",
       amount: cost,
       primaryAccount: AccountType.mandatory,
       deficit: deficit,
     );
   }
 
-  // ===== EVENTS =====
-  bool canTriggerEvent(String eventId) {
-    if (!_eventHistory.containsKey(eventId)) return true;
-    if (eventId.contains('repair') || eventId.contains('broken')) {
-      return (_currentMonth - _eventHistory[eventId]!) >= 2;
-    }
-    return true;
-  }
-
   void _triggerRandomEvent() {
-    List<GameEvent> eligibleEvents = allEvents
-        .where((e) => e.type != EventType.quiz && canTriggerEvent(e.id))
-        .toList();
+    List<GameEvent> eligibleEvents = allEvents.where((e) => e.type != EventType.quiz && canTriggerEvent(e.id)).toList();
     if (eligibleEvents.isEmpty) return;
 
-    // Mood-based weighting
     final rand = Random();
     if (_mood > 70) {
-      // Good mood → prefer negative events
-      var negatives = eligibleEvents
-          .where((e) => !e.isPositive && e.type == EventType.random)
-          .toList();
+      var negatives = eligibleEvents.where((e) => !e.isPositive && e.type == EventType.random).toList();
       if (negatives.isNotEmpty && rand.nextDouble() < 0.6) {
         _currentEvent = negatives[rand.nextInt(negatives.length)];
         _eventHistory[_currentEvent!.id] = _currentMonth;
         return;
       }
     } else if (_mood < 40) {
-      // Bad mood → prefer positive events
-      var positives = eligibleEvents
-          .where((e) => e.isPositive || e.type == EventType.voluntary)
-          .toList();
+      var positives = eligibleEvents.where((e) => e.isPositive || e.type == EventType.voluntary).toList();
       if (positives.isNotEmpty && rand.nextDouble() < 0.6) {
         _currentEvent = positives[rand.nextInt(positives.length)];
         _eventHistory[_currentEvent!.id] = _currentMonth;
@@ -563,17 +363,20 @@ class GameState with ChangeNotifier {
     _eventHistory[_currentEvent!.id] = _currentMonth;
   }
 
+  bool canTriggerEvent(String eventId) {
+    if (!_eventHistory.containsKey(eventId)) return true;
+    if (eventId.contains('repair') || eventId.contains('broken')) {
+      return (_currentMonth - _eventHistory[eventId]!) >= 2;
+    }
+    return true;
+  }
+
   void _triggerQuiz() {
-    // 1. Refill and shuffle if empty
     if (_pendingQuizIds.isEmpty) {
-      _pendingQuizIds = GameData.allEvents
-          .where((e) => e.type == EventType.quiz)
-          .map((e) => e.id)
-          .toList();
+      _pendingQuizIds = GameData.allEvents.where((e) => e.type == EventType.quiz).map((e) => e.id).toList();
       _pendingQuizIds.shuffle();
     }
 
-    // 2. Pick the next one from the "stack"
     if (_pendingQuizIds.isNotEmpty) {
       String nextId = _pendingQuizIds.removeLast();
       _currentEvent = GameData.allEvents.firstWhere((e) => e.id == nextId);
@@ -583,48 +386,17 @@ class GameState with ChangeNotifier {
 
   void _checkGameOver() {
     _isGameOver = true;
-    // Win if accumulated savings >= goal cost AND mood > 0
-    bool goalReached =
-        _selectedGoal != null && _savingsGoal >= _selectedGoal!.cost;
+    bool goalReached = _selectedGoal != null && _finance.savingsGoal >= _selectedGoal!.cost;
     bool moodOk = _mood > 0;
 
     if (goalReached && moodOk) {
       _isWin = true;
       _gamePoints += _selectedGoal!.pointsReward;
-      // Promotion eligibility: Goal reached AND Mood >= 60
-      if (_mood >= 60) {
-        _eligibleForPromotion = true;
-      }
+      if (_mood >= 60) _career.eligibleForPromotion = true;
     } else {
       _isWin = false;
-      // Note: We don't reset _eligibleForPromotion to false here if it's already true from previous achievements?
-      // Actually, promotion is usually per-month. So if you fail this month, you lose eligibility for THIS month's promotion.
-      _eligibleForPromotion = false;
+      _career.eligibleForPromotion = false;
     }
-  }
-
-  // ===== EVENT RESOLUTION =====
-  void handleEventChoice(bool accepted) {
-    if (_currentEvent == null) return;
-
-    double moneyCost = _currentEvent!.moneyImpact;
-    double moodImpact = _currentEvent!.moodImpact;
-
-    if (_currentEvent!.type == EventType.voluntary) {
-      if (accepted) {
-        _applyFinancialImpact(moneyCost);
-        _mood += moodImpact;
-      } else {
-        _mood -= 15;
-      }
-    } else if (_currentEvent!.type == EventType.random) {
-      _applyFinancialImpact(moneyCost);
-      _mood += moodImpact;
-    }
-
-    _currentEvent = null;
-    _validateStats();
-    notifyListeners();
   }
 
   void resolveEvent(bool accepted, {int? quizAnswerIndex, int? courseChoice}) {
@@ -632,7 +404,7 @@ class GameState with ChangeNotifier {
 
     if (_currentEvent!.type == EventType.quiz) {
       if (quizAnswerIndex == _currentEvent!.correctAnswerIndex) {
-        _walletBalance += _currentEvent!.moneyImpact;
+        _finance.walletBalance += _currentEvent!.moneyImpact;
         _gamePoints += 10;
         _mood += 10;
       } else {
@@ -641,29 +413,16 @@ class GameState with ChangeNotifier {
       _currentEvent = null;
     } else if (_currentEvent!.type == EventType.payment) {
       if (accepted) {
-        // Option A: Pay Now
         _applyMandatoryExpense(_currentEvent!.moneyImpact.abs());
         _mood += 5;
       } else {
-        // Option B: Delay
-        _pendingPayments.add(
-          PendingPayment(
-            title: _currentEvent!.title,
-            amount: _currentEvent!.moneyImpact,
-            dueDate: _currentDay + 7,
-          ),
-        );
+        _pendingPayments.add(PendingPayment(title: _currentEvent!.title, amount: _currentEvent!.moneyImpact, dueDate: _currentDay + 7));
         _mood -= 15;
       }
       _currentEvent = null;
     } else {
       if (_currentEvent!.id == 'overtime_offer') {
-        // Custom check for overtime choice
-        if (accepted) {
-          _overtimeCount++;
-          _applyFinancialImpact(2000);
-          _mood -= 15;
-        }
+        if (accepted) { _overtimeCount++; _applyFinancialImpact(2000); _mood -= 15; }
         _currentEvent = null;
       } else {
         handleEventChoice(accepted);
@@ -674,68 +433,46 @@ class GameState with ChangeNotifier {
     notifyListeners();
   }
 
-  void _applyFinancialImpact(double amount) {
-    if (amount >= 0) {
-      _walletBalance += amount;
-      return;
+  void handleEventChoice(bool accepted) {
+    if (_currentEvent == null) return;
+    if (_currentEvent!.type == EventType.voluntary) {
+      if (accepted) { _applyFinancialImpact(_currentEvent!.moneyImpact); _mood += _currentEvent!.moodImpact; }
+      else { _mood -= 15; }
+    } else if (_currentEvent!.type == EventType.random) {
+      _applyFinancialImpact(_currentEvent!.moneyImpact);
+      _mood += _currentEvent!.moodImpact;
     }
-
-    double cost = amount.abs();
-
-    if (_walletBalance >= cost) {
-      _walletBalance -= cost;
-      return;
-    }
-
-    double availableInPrimary = _walletBalance;
-    double deficit = cost - availableInPrimary;
-    _walletBalance = 0;
-
-    _pendingTransaction = PendingTransaction(
-      title: "Финансовое событие",
-      amount: cost,
-      primaryAccount: AccountType.wallet,
-      deficit: deficit,
-    );
+    _currentEvent = null;
+    _validateStats();
+    notifyListeners();
   }
 
-  // ===== SHOP =====
+  void _applyFinancialImpact(double amount) {
+    if (amount >= 0) { _finance.walletBalance += amount; return; }
+    double cost = amount.abs();
+    if (_finance.walletBalance >= cost) { _finance.walletBalance -= cost; return; }
+    double deficit = cost - _finance.walletBalance;
+    _finance.walletBalance = 0;
+    _pendingTransaction = PendingTransaction(title: "Финансовое событие", amount: cost, primaryAccount: AccountType.wallet, deficit: deficit);
+  }
+
   void buyItem(MerchItem item) {
-    if (_gamePoints >= item.price) {
-      _gamePoints -= item.price;
-      _inventory.add(item);
-      notifyListeners();
-    }
+    if (_gamePoints >= item.price) { _gamePoints -= item.price; _inventory.add(item); notifyListeners(); }
   }
 
   void _validateStats() {
     _mood = _mood.clamp(0, 100);
-    if (_mood <= 0) {
-      _isGameOver = true;
-      _isWin = false;
-    }
+    if (_mood <= 0) { _isGameOver = true; _isWin = false; }
   }
 
-  void updateWallet(double amount) {
-    _walletBalance += amount;
-    notifyListeners();
-  }
-
-  void updateMood(double amount) {
-    _mood += amount;
-    _validateStats();
-    notifyListeners();
-  }
-  // ===== COURSE SHOP =====
-  bool get isCourseShopAvailable {
-    return _currentMonth >= 2 && _currentDay <= 15;
-  }
+  void updateWallet(double amount) { _finance.walletBalance += amount; notifyListeners(); }
+  void updateMood(double amount) { _mood += amount; _validateStats(); notifyListeners(); }
+  bool get isCourseShopAvailable => _currentMonth >= 2 && _currentDay <= 15;
 
   void buyCourse(Course course) {
-    if (_walletBalance >= course.cost &&
-        !_completedCourses.contains(course.title)) {
-      _walletBalance -= course.cost;
-      _completedCourses.add(course.title);
+    if (_finance.walletBalance >= course.cost && !_career.completedCourses.contains(course.title)) {
+      _finance.walletBalance -= course.cost;
+      _career.completedCourses.add(course.title);
       notifyListeners();
     }
   }

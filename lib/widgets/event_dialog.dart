@@ -2,13 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../models/event.dart';
 import '../models/enums.dart';
-import 'package:provider/provider.dart';
-import '../app_state.dart';
+import 'event_views/quiz_view.dart';
+import 'event_views/payment_view.dart';
+import 'event_views/voluntary_view.dart';
 
 class EventDialog extends StatefulWidget {
   final GameEvent event;
-  final Function(bool accepted, {int? quizAnswerIndex, int? courseChoice})
-  onResolve;
+  final Function(bool accepted, {int? quizAnswerIndex, int? courseChoice}) onResolve;
 
   const EventDialog({super.key, required this.event, required this.onResolve});
 
@@ -31,210 +31,16 @@ class _EventDialogState extends State<EventDialog> {
       ),
       title: Text(
         widget.event.title.toUpperCase(),
-        style: GoogleFonts.getFont(
-          'Press Start 2P',
-          fontSize: 14,
-          color: _titleColor,
-        ),
+        style: GoogleFonts.getFont('Press Start 2P', fontSize: 14, color: _titleColor),
       ),
       content: SingleChildScrollView(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              widget.event.description,
-              style: GoogleFonts.getFont(
-                'Press Start 2P',
-                fontSize: 10,
-                height: 1.5,
-              ),
-            ),
+            Text(widget.event.description, style: GoogleFonts.getFont('Press Start 2P', fontSize: 10, height: 1.5)),
             const SizedBox(height: 20),
-
-            // QUIZ options
-            if (widget.event.type == EventType.quiz && !showTip)
-              ...List.generate(widget.event.options!.length, (index) {
-                return Padding(
-                  padding: const EdgeInsets.only(bottom: 10),
-                  child: SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: selectedOption == index
-                            ? Colors.white
-                            : Colors.grey[800],
-                        foregroundColor: selectedOption == index
-                            ? Colors.black
-                            : Colors.white,
-                      ),
-                      onPressed: () {
-                        setState(() {
-                          selectedOption = index;
-                          isCorrect = index == widget.event.correctAnswerIndex;
-                          showTip = true;
-                        });
-                      },
-                      child: Text(
-                        widget.event.options![index],
-                        style: const TextStyle(fontSize: 8),
-                      ),
-                    ),
-                  ),
-                );
-              }),
-
-            // Quiz tip
-            if (showTip && widget.event.type == EventType.quiz)
-              Container(
-                padding: const EdgeInsets.all(10),
-                color: isCorrect!
-                    ? Colors.green.withValues(alpha: 0.2)
-                    : Colors.red.withValues(alpha: 0.2),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      isCorrect! ? "ПРАВИЛЬНО!" : "НЕВЕРНО!",
-                      style: GoogleFonts.getFont(
-                        'Press Start 2P',
-                        fontSize: 10,
-                        color: isCorrect!
-                            ? Colors.greenAccent
-                            : Colors.redAccent,
-                      ),
-                    ),
-                    const SizedBox(height: 10),
-                    Text(
-                      widget.event.educationalTip ?? "",
-                      style: GoogleFonts.getFont(
-                        'Press Start 2P',
-                        fontSize: 8,
-                        color: Colors.white,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-
-            // RENT or PAYMENT info
-            if (widget.event.type == EventType.rent ||
-                widget.event.type == EventType.payment)
-              Container(
-                padding: const EdgeInsets.all(12),
-                color: Colors.redAccent.withValues(alpha: 0.15),
-                child: Column(
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        const Text('💰', style: TextStyle(fontSize: 16)),
-                        const SizedBox(width: 12),
-                        Text(
-                          '${widget.event.moneyImpact.abs().toInt()} ₽',
-                          style: GoogleFonts.getFont(
-                            'Press Start 2P',
-                            fontSize: 14,
-                            color: Colors.redAccent,
-                          ),
-                        ),
-                      ],
-                    ),
-                    if (widget.event.type == EventType.payment)
-                      Padding(
-                        padding: const EdgeInsets.only(top: 8),
-                        child: Text(
-                          'Можно оплатить сейчас (+5🎭) или отложить на неделю (-15🎭)',
-                          textAlign: TextAlign.center,
-                          style: GoogleFonts.getFont(
-                            'Press Start 2P',
-                            fontSize: 6,
-                            color: Colors.white70,
-                          ),
-                        ),
-                      ),
-                  ],
-                ),
-              ),
-
-            // COURSE options
-            if (widget.event.type == EventType.course)
-              ...List.generate(widget.event.options!.length, (index) {
-                bool isRefuse = index == widget.event.options!.length - 1;
-                return Padding(
-                  padding: const EdgeInsets.only(bottom: 10),
-                  child: SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: isRefuse
-                            ? Colors.grey[800]
-                            : Colors.cyanAccent.withValues(alpha: 0.2),
-                        foregroundColor: isRefuse
-                            ? Colors.grey
-                            : Colors.cyanAccent,
-                        side: BorderSide(
-                          color: isRefuse ? Colors.grey : Colors.cyanAccent,
-                        ),
-                      ),
-                      onPressed: () {
-                        widget.onResolve(true, courseChoice: index);
-                      },
-                      child: Text(
-                        index < 2
-                            ? '${widget.event.options![index]} — 5000₽'
-                            : widget.event.options![index],
-                        style: GoogleFonts.getFont(
-                          'Press Start 2P',
-                          fontSize: 8,
-                        ),
-                      ),
-                    ),
-                  ),
-                );
-              }),
-
-            // VOLUNTARY stat chips
-            if (widget.event.type == EventType.voluntary)
-              Consumer<GameState>(
-                builder: (context, state, child) {
-                  bool needsEmergency =
-                      state.walletBalance < widget.event.moneyImpact.abs();
-                  return Column(
-                    children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          _statChip(
-                            '💰',
-                            '${widget.event.moneyImpact} ₽',
-                            Colors.yellowAccent,
-                          ),
-                          const SizedBox(width: 20),
-                          _statChip(
-                            '🎭',
-                            '${widget.event.moodImpact > 0 ? "+" : ""}${widget.event.moodImpact}',
-                            Colors.orangeAccent,
-                          ),
-                        ],
-                      ),
-                      if (needsEmergency && widget.event.moneyImpact < 0)
-                        Padding(
-                          padding: const EdgeInsets.only(top: 10),
-                          child: Text(
-                            '⚠️ Придется залезть в Подушку!',
-                            textAlign: TextAlign.center,
-                            style: GoogleFonts.getFont(
-                              'Press Start 2P',
-                              fontSize: 7,
-                              color: Colors.orangeAccent,
-                            ),
-                          ),
-                        ),
-                    ],
-                  );
-                },
-              ),
+            _buildEventSpecificContent(),
           ],
         ),
       ),
@@ -242,17 +48,65 @@ class _EventDialogState extends State<EventDialog> {
     );
   }
 
+  Widget _buildEventSpecificContent() {
+    switch (widget.event.type) {
+      case EventType.quiz:
+        return QuizView(
+          event: widget.event,
+          selectedOption: selectedOption,
+          showTip: showTip,
+          isCorrect: isCorrect,
+          onOptionSelected: (index) => setState(() {
+            selectedOption = index;
+            isCorrect = index == widget.event.correctAnswerIndex;
+            showTip = true;
+          }),
+        );
+      case EventType.rent:
+      case EventType.payment:
+        return PaymentView(event: widget.event);
+      case EventType.voluntary:
+        return VoluntaryView(event: widget.event);
+      case EventType.course:
+        return _buildCourseOptions();
+      default:
+        return const SizedBox();
+    }
+  }
+
+  Widget _buildCourseOptions() {
+    return Column(
+      children: List.generate(widget.event.options!.length, (index) {
+        bool isRefuse = index == widget.event.options!.length - 1;
+        return Padding(
+          padding: const EdgeInsets.only(bottom: 10),
+          child: SizedBox(
+            width: double.infinity,
+            child: ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: isRefuse ? Colors.grey[800] : Colors.cyanAccent.withValues(alpha: 0.2),
+                foregroundColor: isRefuse ? Colors.grey : Colors.cyanAccent,
+                side: BorderSide(color: isRefuse ? Colors.grey : Colors.cyanAccent),
+              ),
+              onPressed: () => widget.onResolve(true, courseChoice: index),
+              child: Text(
+                index < 2 ? '${widget.event.options![index]} — 5000₽' : widget.event.options![index],
+                style: GoogleFonts.getFont('Press Start 2P', fontSize: 8),
+              ),
+            ),
+          ),
+        );
+      }),
+    );
+  }
+
   Color get _titleColor {
     switch (widget.event.type) {
       case EventType.rent:
-      case EventType.payment:
-        return Colors.redAccent;
-      case EventType.course:
-        return Colors.purpleAccent;
-      case EventType.quiz:
-        return Colors.yellowAccent;
-      default:
-        return Colors.cyanAccent;
+      case EventType.payment: return Colors.redAccent;
+      case EventType.course: return Colors.purpleAccent;
+      case EventType.quiz: return Colors.yellowAccent;
+      default: return Colors.cyanAccent;
     }
   }
 
@@ -263,66 +117,24 @@ class _EventDialogState extends State<EventDialog> {
       case EventType.voluntary:
         return [
           _pixelButton("ОТКАЗАТЬСЯ", () => widget.onResolve(false)),
-          _pixelButton(
-            "СОГЛАСИТЬСЯ",
-            () => widget.onResolve(true),
-            isPrimary: true,
-          ),
+          _pixelButton("СОГЛАСИТЬСЯ", () => widget.onResolve(true), isPrimary: true),
         ];
       case EventType.quiz:
-        if (showTip) {
-          return [
-            _pixelButton(
-              "ПОНЯТНО",
-              () => widget.onResolve(true, quizAnswerIndex: selectedOption),
-            ),
-          ];
-        }
+        if (showTip) return [_pixelButton("ПОНЯТНО", () => widget.onResolve(true, quizAnswerIndex: selectedOption))];
         return [];
       case EventType.rent:
-        return [
-          _pixelButton(
-            "ОПЛАТИТЬ",
-            () => widget.onResolve(true),
-            isPrimary: true,
-          ),
-        ];
+        return [_pixelButton("ОПЛАТИТЬ", () => widget.onResolve(true), isPrimary: true)];
       case EventType.payment:
         return [
           _pixelButton("ОТЛОЖИТЬ", () => widget.onResolve(false)),
-          _pixelButton(
-            "ОПЛАТИТЬ",
-            () => widget.onResolve(true),
-            isPrimary: true,
-          ),
+          _pixelButton("ОПЛАТИТЬ", () => widget.onResolve(true), isPrimary: true),
         ];
       case EventType.course:
-        return []; // Buttons are inline (in content)
+        return [];
     }
   }
 
-  Widget _statChip(String icon, String label, Color color) {
-    return Column(
-      children: [
-        Text(icon, style: const TextStyle(fontSize: 12)),
-        const SizedBox(height: 4),
-        Text(
-          label,
-          style: TextStyle(
-            fontSize: 8,
-            color: color,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _pixelButton(
-    String label,
-    VoidCallback onPressed, {
-    bool isPrimary = false,
-  }) {
+  Widget _pixelButton(String label, VoidCallback onPressed, {bool isPrimary = false}) {
     return ElevatedButton(
       style: ElevatedButton.styleFrom(
         backgroundColor: isPrimary ? Colors.cyanAccent : Colors.grey[800],

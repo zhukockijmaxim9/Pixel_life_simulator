@@ -1,0 +1,302 @@
+import '../models/event.dart';
+import '../models/enums.dart';
+
+class EventsData {
+  static final List<GameEvent> randomEvents = [
+    const GameEvent(
+      id: 'phone_repair',
+      title: 'Сломался экран телефона',
+      description:
+          'Неудачное падение! Экран вдребезги. Придется раскошелиться на ремонт.',
+      type: EventType.random,
+      moneyImpact: -1000,
+      moodImpact: -10,
+      isPositive: false,
+    ),
+    const GameEvent(
+      id: 'lost_transport',
+      title: 'Опоздал на транспорт',
+      description: 'Автобус ушёл прямо из-под носа. Пришлось брать такси.',
+      type: EventType.random,
+      moneyImpact: -300,
+      moodImpact: -5,
+      isPositive: false,
+    ),
+    const GameEvent(
+      id: 'wallet_lost',
+      title: 'Потерял кошелёк',
+      description: 'Кошелёк выпал из кармана в толпе. Деньги не вернуть.',
+      type: EventType.random,
+      moneyImpact: -1000,
+      moodImpact: -15,
+      isPositive: false,
+    ),
+    const GameEvent(
+      id: 'found_money',
+      title: 'Нашел 500 рублей',
+      description: 'Мелочь, а приятно! Деньги валялись прямо на тротуаре.',
+      type: EventType.random,
+      moneyImpact: 500,
+      moodImpact: 5,
+      isPositive: true,
+    ),
+    const GameEvent(
+      id: 'found_coupon',
+      title: 'Нашёл купон на скидку',
+      description: 'Бесплатный кофе по акции — отличное начало дня!',
+      type: EventType.random,
+      moneyImpact: 0,
+      moodImpact: 8,
+      isPositive: true,
+    ),
+    const GameEvent(
+      id: 'pizza_friends',
+      title: 'Друзья зовут в пиццерию',
+      description:
+          'Отличный evening с друзьями поможет расслабиться, но стоит денег.',
+      type: EventType.voluntary,
+      moneyImpact: -1500,
+      moodImpact: 15,
+    ),
+    const GameEvent(
+      id: 'cinema_night',
+      title: 'Поход в кино',
+      description: 'Новый блокбастер вышел на экраны! Идем?',
+      type: EventType.voluntary,
+      moneyImpact: -1000,
+      moodImpact: 10,
+    ),
+    const GameEvent(
+      id: 'overtime_offer',
+      title: 'Сверхурочная работа',
+      description:
+          'Начальник просит задержаться. Платят неплохо, но сил совсем не останется.',
+      type: EventType.voluntary,
+      moneyImpact: 2000,
+      moodImpact: -15,
+    ),
+    const GameEvent(
+      id: 'help_colleague',
+      title: 'Помочь коллеге',
+      description:
+          'Коллега просит помочь с задачей. Это займёт время, но улучшит отношения.',
+      type: EventType.voluntary,
+      moneyImpact: 0,
+      moodImpact: 8,
+    ),
+    const GameEvent(
+      id: 'street_food',
+      title: 'Фестиваль стрит-фуда',
+      description: 'В городе проходит фестиваль еды. Вкусно, но не бесплатно!',
+      type: EventType.voluntary,
+      moneyImpact: -400,
+      moodImpact: 5,
+    ),
+    const GameEvent(
+      id: 'sale_event',
+      title: 'Распродажа!',
+      description: 'Большие скидки в любимом магазине. Может стоит зайти?',
+      type: EventType.voluntary,
+      moneyImpact: -1500,
+      moodImpact: 10,
+    ),
+  ];
+
+  static final List<GameEvent> quizEvents = [
+    const GameEvent(
+      id: 'quiz_safe_cushion',
+      title: 'Квиз от Неофлекс',
+      description: 'Что такое финансовая подушка безопасности?',
+      type: EventType.quiz,
+      options: [
+        'Деньги на новый iPhone',
+        'Запас денег на 3-6 месяцев жизни',
+        'Кредитная карта с лимитом',
+        'Мягкая подушка с купюрами',
+      ],
+      correctAnswerIndex: 1,
+      moneyImpact: 2000,
+      educationalTip:
+          'Финансовая подушка — это резерв на случай потери дохода.',
+    ),
+    const GameEvent(
+      id: 'quiz_inflation',
+      title: 'Квиз: Инфляция',
+      description: 'Как инфляция влияет на ваши сбережения?',
+      type: EventType.quiz,
+      options: [
+        'Увеличивает их стоимость',
+        'Снижает их покупательскую способность',
+        'Никак не влияет',
+        'Делает цены ниже',
+      ],
+      correctAnswerIndex: 1,
+      moneyImpact: 2000,
+      educationalTip: 'Инфляция — это процесс обесценивания денег.',
+    ),
+    const GameEvent(
+      id: 'quiz_budget',
+      title: 'Квиз: Бюджет',
+      description: 'Какой главный принцип ведения личного бюджета?',
+      type: EventType.quiz,
+      options: [
+        'Тратить всё что заработал',
+        'Записывать доходы и расходы',
+        'Копить абсолютно все деньги',
+        'Брать кредиты на всё',
+      ],
+      correctAnswerIndex: 1,
+      moneyImpact: 2000,
+      educationalTip: 'Ведение бюджета — основа финансовой грамотности.',
+    ),
+    const GameEvent(
+      id: 'quiz_savings',
+      title: 'Квиз: Сбережения',
+      description: 'Зачем нужны сбережения?',
+      type: EventType.quiz,
+      options: [
+        'Чтобы деньги лежали без дела',
+        'Для покупки ненужных вещей',
+        'Для финансовой безопасности и крупных покупок',
+        'Их не нужно иметь',
+      ],
+      correctAnswerIndex: 2,
+      moneyImpact: 2000,
+      educationalTip:
+          'Сбережения помогают достигать финансовых целей и защищают от непредвиденных расходов.',
+    ),
+    const GameEvent(
+      id: 'quiz_diversification',
+      title: 'Квиз: Диверсификация',
+      description: 'Что такое диверсификация вложений?',
+      type: EventType.quiz,
+      options: [
+        'Вложение всех денег в одну акцию',
+        'Распределение средств между разными активами',
+        'Хранение денег под подушкой',
+        'Покупка только валюты',
+      ],
+      correctAnswerIndex: 1,
+      moneyImpact: 2000,
+      educationalTip:
+          'Диверсификация снижает риски: если один актив упадет, другие могут вырасти.',
+    ),
+    const GameEvent(
+      id: 'quiz_compound_interest',
+      title: 'Квиз: Сложный процент',
+      description: 'Что такое сложный процент?',
+      type: EventType.quiz,
+      options: [
+        'Процент, который очень сложно посчитать',
+        'Начисление процентов на основную сумму и на накопленные проценты',
+        'Фиксированный налог на доход',
+        'Процент по кредиту с переменной ставкой',
+      ],
+      correctAnswerIndex: 1,
+      moneyImpact: 2000,
+      educationalTip:
+          'Эйнштейн называл сложный процент восьмым чудом света.',
+    ),
+    const GameEvent(
+      id: 'quiz_credit_score',
+      title: 'Квиз: Кредитная история',
+      description: 'Что больше всего влияет на кредитную историю?',
+      type: EventType.quiz,
+      options: [
+        'Ваше образование',
+        'Своевременная оплата платежей по кредитам',
+        'Количество детей',
+        'Ваше хобби',
+      ],
+      correctAnswerIndex: 1,
+      moneyImpact: 2000,
+      educationalTip:
+          'Просрочки по платежам — главный враг кредитного рейтинга.',
+    ),
+    const GameEvent(
+      id: 'quiz_safe_fund_size',
+      title: 'Квиз: Размер подушки',
+      description: 'Какой оптимальный размер финансовой подушки?',
+      type: EventType.quiz,
+      options: [
+        '10 000 рублей на всякий случай',
+        '3-6 ваших месячных расходов',
+        'Сумма вашего годового дохода',
+        'Любая сумма, которую не жалко',
+      ],
+      correctAnswerIndex: 1,
+      moneyImpact: 2000,
+      educationalTip:
+          'Подушка должна покрывать базовые нужды в течение нескольких месяцев.',
+    ),
+    const GameEvent(
+      id: 'quiz_taxes',
+      title: 'Квиз: Налоги',
+      description: 'Что такое НДФЛ?',
+      type: EventType.quiz,
+      options: [
+        'Налог на добавленную стоимость',
+        'Налог на доходы физических лиц',
+        'Налог на имущество',
+        'Транспортный налог',
+      ],
+      correctAnswerIndex: 1,
+      moneyImpact: 2000,
+      educationalTip: 'В России базовая ставка НДФЛ составляет 13% или 15%.',
+    ),
+    const GameEvent(
+      id: 'quiz_risk_reward',
+      title: 'Квиз: Риск и доходность',
+      description: 'Как связаны риск и потенциальная доходность?',
+      type: EventType.quiz,
+      options: [
+        'Чем выше доходность, тем ниже риск',
+        'Чем выше доходность, тем выше риск',
+        'Они никак не связаны',
+        'Риск всегда одинаковый',
+      ],
+      correctAnswerIndex: 1,
+      moneyImpact: 2000,
+      educationalTip:
+          'Обещание высокой доходности при нулевом риске — признак мошенничества.',
+    ),
+    const GameEvent(
+      id: 'quiz_insurance',
+      title: 'Квиз: Страхование',
+      description: 'Зачем нужно страхование жизни или здоровья?',
+      type: EventType.quiz,
+      options: [
+        'Чтобы накопить на отпуск',
+        'Чтобы получить финансовую защиту при наступлении несчастного случая',
+        'Чтобы не платить налоги',
+        'Это пустая трата денег',
+      ],
+      correctAnswerIndex: 1,
+      moneyImpact: 2000,
+      educationalTip: 'Страхование перекладывает крупные риски на страховую компанию.',
+    ),
+    const GameEvent(
+      id: 'quiz_smart_goals',
+      title: 'Квиз: SMART цели',
+      description: 'Что означает буква "R" в методологии SMART?',
+      type: EventType.quiz,
+      options: [
+        'Random (Случайная)',
+        'Relevant (Значимая/Реалистичная)',
+        'Rich (Богатая)',
+        'Rapid (Быстрая)',
+      ],
+      correctAnswerIndex: 1,
+      moneyImpact: 2000,
+      educationalTip: 'Цель должна быть конкретной, измеримой, достижимой, значимой и ограниченной во времени.',
+    ),
+  ];
+
+  static const GameEvent rentEvent = GameEvent(
+    id: 'rent_payment',
+    title: 'Оплата аренды',
+    description: 'Пришло время оплатить аренду жилья.',
+    type: EventType.rent,
+    moneyImpact: -7000,
+  );
+}
