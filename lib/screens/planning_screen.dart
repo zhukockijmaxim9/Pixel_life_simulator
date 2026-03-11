@@ -21,7 +21,7 @@ class _PlanningScreenState extends State<PlanningScreen> {
   Job? _tempJob;
   GameGoal? _tempGoal;
   double _walletAlloc = 10000;
-  double _emergencyAlloc = 5000;
+  double _deferredAlloc = 5000;
   double _mandatoryAlloc = 15000;
 
   @override
@@ -34,7 +34,16 @@ class _PlanningScreenState extends State<PlanningScreen> {
   }
 
   double get _jobSalary => _tempJob?.salary ?? 45000;
-  double get _surplus => _jobSalary - (_tempGoal?.monthlyContribution ?? 0.0);
+  double get _currentRent => GameData.getRent(_tempJob?.tier ?? 1);
+  
+  // Get carry-over from state
+  double get _carryOver {
+    final state = Provider.of<GameState>(context, listen: false);
+    return state.carryOver;
+  }
+  
+  double get _totalBudget => _jobSalary + _carryOver;
+  double get _surplus => _totalBudget - (_tempGoal?.monthlyContribution ?? 0.0);
 
   void _goBack() {
     if (_step > 0) {
@@ -84,9 +93,9 @@ class _PlanningScreenState extends State<PlanningScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('НА ЧТО БУДЕШЬ КОПИТЬ?', style: GoogleFonts.getFont('Press Start 2P', fontSize: 9, color: Colors.grey)),
+                Text('НА ЧТО БУДЕШЬ КОПИТЬ?', style: GoogleFonts.getFont('Press Start 2P', fontSize: 10, color: Colors.grey)),
                 const SizedBox(height: 8),
-                Text('Достигни цели и получи бонусные баллы для покупки крутого мерча за достижение!', style: GoogleFonts.getFont('Press Start 2P', fontSize: 7, color: Colors.white38, height: 1.5)),
+                Text('Достигни цели и получи бонусные баллы для покупки крутого мерча за достижение!', style: GoogleFonts.getFont('Press Start 2P', fontSize: 8, color: Colors.white38, height: 1.5)),
                 const SizedBox(height: 20),
                 ...GameData.availableGoals.map((goal) => GoalCard(
                   goal: goal,
@@ -111,34 +120,40 @@ class _PlanningScreenState extends State<PlanningScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('РАСПРЕДЕЛИ БЮДЖЕТ', style: GoogleFonts.getFont('Press Start 2P', fontSize: 9, color: Colors.grey)),
+                Text('РАСПРЕДЕЛИ БЮДЖЕТ', style: GoogleFonts.getFont('Press Start 2P', fontSize: 10, color: Colors.grey)),
                 const SizedBox(height: 8),
-                Text('Зарплата: ${_jobSalary.toInt()} ₽  |  Аренда: ${GameData.RENT.toInt()} ₽', style: GoogleFonts.getFont('Press Start 2P', fontSize: 7, color: Colors.white38)),
+                if (_carryOver > 0) ...[
+                  Text('Зарплата: ${_jobSalary.toInt()} ₽ + остаток: ${_carryOver.toInt()} ₽', style: GoogleFonts.getFont('Press Start 2P', fontSize: 9, color: Colors.white38)),
+                  const SizedBox(height: 4),
+                  Text('Всего: ${_totalBudget.toInt()} ₽  |  Аренда: ${_currentRent.toInt()} ₽', style: GoogleFonts.getFont('Press Start 2P', fontSize: 9, color: Colors.greenAccent)),
+                ] else ...[
+                  Text('Зарплата: ${_jobSalary.toInt()} ₽  |  Аренда: ${_currentRent.toInt()} ₽', style: GoogleFonts.getFont('Press Start 2P', fontSize: 9, color: Colors.white38)),
+                ],
                 const SizedBox(height: 4),
-                Text('На цель (фикс): ${(_tempGoal?.monthlyContribution ?? 0).toInt()} ₽', style: GoogleFonts.getFont('Press Start 2P', fontSize: 7, color: Colors.yellowAccent)),
+                Text('На цель (фикс): ${(_tempGoal?.monthlyContribution ?? 0).toInt()} ₽', style: GoogleFonts.getFont('Press Start 2P', fontSize: 9, color: Colors.yellowAccent)),
                 const SizedBox(height: 4),
-                Text('Остаток к распределению: ${_surplus.toInt()} ₽', style: GoogleFonts.getFont('Press Start 2P', fontSize: 7, color: Colors.cyanAccent)),
+                Text('Остаток к распределению: ${_surplus.toInt()} ₽', style: GoogleFonts.getFont('Press Start 2P', fontSize: 9, color: Colors.cyanAccent)),
                 const SizedBox(height: 24),
                 BudgetSlider(
                   label: 'КОШЕЛЕК',
                   value: _walletAlloc,
                   max: _surplus,
                   onChanged: (val) {
-                    double remaining = _surplus - _emergencyAlloc - _mandatoryAlloc;
+                    double remaining = _surplus - _deferredAlloc - _mandatoryAlloc;
                     setState(() => _walletAlloc = val.clamp(0, remaining));
                   },
                   description: 'Свободные деньги на развлечение, досуг и покупку еды, если обязательные траты кончились.',
                 ),
                 const SizedBox(height: 16),
                 BudgetSlider(
-                  label: 'ПОДУШКА',
-                  value: _emergencyAlloc,
+                  label: 'ОТЛОЖЕННЫЕ',
+                  value: _deferredAlloc,
                   max: _surplus,
                   onChanged: (val) {
                     double remaining = _surplus - _walletAlloc - _mandatoryAlloc;
-                    setState(() => _emergencyAlloc = val.clamp(0, remaining));
+                    setState(() => _deferredAlloc = val.clamp(0, remaining));
                   },
-                  description: 'Запас на случай ЧП и непредвиденных штрафов или поломок.',
+                  description: 'Деньги на курсы и непредвиденные расходы.',
                 ),
                 const SizedBox(height: 16),
                 BudgetSlider(
@@ -146,7 +161,7 @@ class _PlanningScreenState extends State<PlanningScreen> {
                   value: _mandatoryAlloc,
                   max: _surplus,
                   onChanged: (val) {
-                    double remaining = _surplus - _walletAlloc - _emergencyAlloc;
+                    double remaining = _surplus - _walletAlloc - _deferredAlloc;
                     setState(() => _mandatoryAlloc = val.clamp(0, remaining));
                   },
                   description: 'Деньги на еду и ежемесячную оплату аренды жилья.',
@@ -155,7 +170,7 @@ class _PlanningScreenState extends State<PlanningScreen> {
             ),
           ),
         ),
-        _navButton(label: 'ДАЛЕЕ', active: (_walletAlloc + _emergencyAlloc + _mandatoryAlloc - _surplus).abs() < 0.1, onPressed: () => setState(() => _step = 2)),
+        _navButton(label: 'ДАЛЕЕ', active: (_walletAlloc + _deferredAlloc + _mandatoryAlloc - _surplus).abs() < 0.1, onPressed: () => setState(() => _step = 2)),
       ],
     );
   }
@@ -170,7 +185,7 @@ class _PlanningScreenState extends State<PlanningScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('СВОДКА', style: GoogleFonts.getFont('Press Start 2P', fontSize: 12, color: Colors.yellowAccent)),
+                Text('СВОДКА', style: GoogleFonts.getFont('Press Start 2P', fontSize: 14, color: Colors.yellowAccent)),
                 const SizedBox(height: 24),
                 SummaryBlock(
                   icon: _tempJob?.icon ?? '💼',
@@ -193,18 +208,22 @@ class _PlanningScreenState extends State<PlanningScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('БЮДЖЕТ НА МЕСЯЦ', style: GoogleFonts.getFont('Press Start 2P', fontSize: 8, color: Colors.grey)),
+                      Text('БЮДЖЕТ НА МЕСЯЦ', style: GoogleFonts.getFont('Press Start 2P', fontSize: 10, color: Colors.grey)),
                       const SizedBox(height: 16),
                       _summaryRow('Зарплата', '${_jobSalary.toInt()} ₽', Colors.white),
+                      if (_carryOver > 0) ...[
+                        _summaryRow('Остаток с прошлого месяца', '+${_carryOver.toInt()} ₽', Colors.greenAccent),
+                        _summaryRow('Всего доступно', '${_totalBudget.toInt()} ₽', Colors.white),
+                      ],
                       _summaryRow('На цель (${_tempGoal?.title ?? ''})', '-${goalMoney.toInt()} ₽', Colors.yellowAccent),
                       const Divider(color: Colors.white24),
                       _summaryRow('Остаток', '${_surplus.toInt()} ₽', Colors.cyanAccent),
                       const SizedBox(height: 12),
                       _summaryRow('  👛 Кошелек', '${_walletAlloc.toInt()} ₽', Colors.yellowAccent),
-                      _summaryRow('  🛡️ Подушка', '${_emergencyAlloc.toInt()} ₽', Colors.orangeAccent),
+                      _summaryRow('  📦 Отложенные', '${_deferredAlloc.toInt()} ₽', Colors.orangeAccent),
                       _summaryRow('  📜 Обязат.', '${_mandatoryAlloc.toInt()} ₽', Colors.lightBlueAccent),
                       const SizedBox(height: 12),
-                      _summaryRow('🏠 Аренда (списание 2-го числа)', '-${GameData.RENT.toInt()} ₽', Colors.redAccent),
+                      _summaryRow('🏠 Аренда (списание 2-го числа)', '-${_currentRent.toInt()} ₽', Colors.redAccent),
                     ],
                   ),
                 ),
@@ -214,10 +233,10 @@ class _PlanningScreenState extends State<PlanningScreen> {
         ),
         _navButton(
           label: 'НАЧАТЬ ЖИЗНЬ',
-          active: (_walletAlloc + _emergencyAlloc + _mandatoryAlloc - _surplus).abs() < 0.1,
+          active: (_walletAlloc + _deferredAlloc + _mandatoryAlloc - _surplus).abs() < 0.1,
           onPressed: () {
             if (_tempJob != null && _tempGoal != null) {
-              state.setupGame(_tempJob!, _tempGoal!, walletAlloc: _walletAlloc, emergencyAlloc: _emergencyAlloc, mandatoryAlloc: _mandatoryAlloc, isNewGame: state.currentMonth <= 1);
+              state.setupGame(_tempJob!, _tempGoal!, walletAlloc: _walletAlloc, deferredAlloc: _deferredAlloc, mandatoryAlloc: _mandatoryAlloc, isNewGame: state.currentMonth <= 1);
               Navigator.pushReplacementNamed(context, '/game');
             }
           },
@@ -233,9 +252,9 @@ class _PlanningScreenState extends State<PlanningScreen> {
       color: Colors.cyanAccent.withValues(alpha: 0.06),
       child: Row(
         children: [
-          Text(_tempJob!.icon, style: const TextStyle(fontSize: 20)),
+          Text(_tempJob!.icon, style: const TextStyle(fontSize: 22)),
           const SizedBox(width: 10),
-          Text('${_tempJob!.title}  •  ${_jobSalary.toInt()} ₽/мес', style: GoogleFonts.getFont('Press Start 2P', fontSize: 7, color: Colors.cyanAccent)),
+          Text('${_tempJob!.title}  •  ${_jobSalary.toInt()} ₽/мес', style: GoogleFonts.getFont('Press Start 2P', fontSize: 9, color: Colors.cyanAccent)),
         ],
       ),
     );
@@ -266,8 +285,8 @@ class _PlanningScreenState extends State<PlanningScreen> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(label, style: GoogleFonts.getFont('Press Start 2P', fontSize: 7, color: Colors.white70)),
-          Text(value, style: GoogleFonts.getFont('Press Start 2P', fontSize: 7, color: color)),
+          Expanded(child: Text(label, style: GoogleFonts.getFont('Press Start 2P', fontSize: 9, color: Colors.white70))),
+          Text(value, style: GoogleFonts.getFont('Press Start 2P', fontSize: 9, color: color)),
         ],
       ),
     );

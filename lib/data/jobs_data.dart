@@ -34,28 +34,28 @@ class JobsData {
     const Job(title: 'Аналитик продаж', salary: 155000, icon: '📈', tier: 5, requiredPreviousJobs: ['Менеджер маркетплейсов']),
     const Job(title: 'E-commerce директор', salary: 210000, icon: '🚀', tier: 6, requiredPreviousJobs: ['Аналитик продаж']),
 
-    // Course Branch: Programming
-    const Job(title: 'Junior-разработчик', salary: 80000, icon: '💻', tier: 2, requiredCourse: 'Программирование'),
-    const Job(title: 'Middle-разработчик', salary: 120000, icon: '⚙️', tier: 3, requiredPreviousJobs: ['Junior-разработчик']),
-    const Job(title: 'Senior-разработчик', salary: 180000, icon: '🧠', tier: 4, requiredPreviousJobs: ['Middle-разработчик']),
-    const Job(title: 'Team Lead', salary: 250000, icon: '👥', tier: 5, requiredPreviousJobs: ['Senior-разработчик']),
-    const Job(title: 'Технический директор (CTO)', salary: 350000, icon: '🚀', tier: 6, requiredPreviousJobs: ['Team Lead']),
+    // Course Branch: Programming (expensive course 50k — boosted salary, icon like tier 3)
+    const Job(title: 'Junior-разработчик', salary: 90000, icon: '⚙️', tier: 2, requiredCourse: 'Программирование'),
+    const Job(title: 'Middle-разработчик', salary: 140000, icon: '🧠', tier: 3, requiredPreviousJobs: ['Junior-разработчик']),
+    const Job(title: 'Senior-разработчик', salary: 200000, icon: '💎', tier: 4, requiredPreviousJobs: ['Middle-разработчик']),
+    const Job(title: 'Team Lead', salary: 280000, icon: '👥', tier: 5, requiredPreviousJobs: ['Senior-разработчик']),
+    const Job(title: 'Технический директор (CTO)', salary: 380000, icon: '🚀', tier: 6, requiredPreviousJobs: ['Team Lead']),
 
-    // Course Branch: SMM
-    const Job(title: 'SMM-менеджер', salary: 60000, icon: '📱', tier: 2, requiredCourse: 'SMM и Маркетинг'),
-    const Job(title: 'Таргетолог', salary: 90000, icon: '🎯', tier: 3, requiredPreviousJobs: ['SMM-менеджер']),
-    const Job(title: 'Digital-маркетолог', salary: 130000, icon: '📊', tier: 4, requiredPreviousJobs: ['Таргетолог']),
-    const Job(title: 'Руководитель отдела маркетинга', salary: 180000, icon: '📈', tier: 5, requiredPreviousJobs: ['Digital-маркетолог']),
-    const Job(title: 'Директор по маркетингу (CMO)', salary: 250000, icon: '👑', tier: 6, requiredPreviousJobs: ['Руководитель отдела маркетинга']),
+    // Course Branch: SMM (medium course 30k — boosted salary, icon like tier 3)
+    const Job(title: 'SMM-менеджер', salary: 80000, icon: '🎯', tier: 2, requiredCourse: 'SMM и Маркетинг'),
+    const Job(title: 'Таргетолог', salary: 110000, icon: '📊', tier: 3, requiredPreviousJobs: ['SMM-менеджер']),
+    const Job(title: 'Digital-маркетолог', salary: 150000, icon: '📈', tier: 4, requiredPreviousJobs: ['Таргетолог']),
+    const Job(title: 'Руководитель отдела маркетинга', salary: 200000, icon: '🏆', tier: 5, requiredPreviousJobs: ['Digital-маркетолог']),
+    const Job(title: 'Директор по маркетингу (CMO)', salary: 280000, icon: '👑', tier: 6, requiredPreviousJobs: ['Руководитель отдела маркетинга']),
 
-    // Course Branch: Design
-    const Job(title: 'Junior-дизайнер', salary: 70000, icon: '🎨', tier: 2, requiredCourse: 'Дизайн'),
-    const Job(title: 'UX/UI дизайнер', salary: 100000, icon: '🖱️', tier: 3, requiredPreviousJobs: ['Junior-дизайнер']),
-    const Job(title: 'Senior-дизайнер', salary: 150000, icon: '🖥️', tier: 4, requiredPreviousJobs: ['UX/UI дизайнер']),
-    const Job(title: 'Арт-директор', salary: 200000, icon: '🖼️', tier: 5, requiredPreviousJobs: ['Senior-дизайнер']),
-    const Job(title: 'Директор по продукту', salary: 280000, icon: '💎', tier: 6, requiredPreviousJobs: ['Арт-директор']),
+    // Course Branch: Design (medium course 35k — boosted salary, icon like tier 3)
+    const Job(title: 'Junior-дизайнер', salary: 85000, icon: '🖱️', tier: 2, requiredCourse: 'Дизайн'),
+    const Job(title: 'UX/UI дизайнер', salary: 120000, icon: '🖥️', tier: 3, requiredPreviousJobs: ['Junior-дизайнер']),
+    const Job(title: 'Senior-дизайнер', salary: 170000, icon: '💎', tier: 4, requiredPreviousJobs: ['UX/UI дизайнер']),
+    const Job(title: 'Арт-директор', salary: 230000, icon: '🖼️', tier: 5, requiredPreviousJobs: ['Senior-дизайнер']),
+    const Job(title: 'Директор по продукту', salary: 310000, icon: '🏆', tier: 6, requiredPreviousJobs: ['Арт-директор']),
 
-    // Course Branch: Coffee
+    // Course Branch: Coffee (cheap course 15k — no salary boost)
     const Job(title: 'Бариста', salary: 55000, icon: '☕', tier: 2, requiredCourse: 'Кофейное дело'),
     const Job(title: 'Старший бариста', salary: 75000, icon: '📋', tier: 3, requiredPreviousJobs: ['Бариста']),
     const Job(title: 'Шеф-бариста', salary: 100000, icon: '🏆', tier: 4, requiredPreviousJobs: ['Старший бариста']),

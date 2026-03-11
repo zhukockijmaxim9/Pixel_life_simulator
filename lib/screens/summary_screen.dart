@@ -39,7 +39,7 @@ class SummaryScreen extends StatelessWidget {
                     'Месяц ${state.currentMonth}',
                     style: GoogleFonts.getFont(
                       'Press Start 2P',
-                      fontSize: 10,
+                      fontSize: 12,
                       color: Colors.grey,
                     ),
                   ),
@@ -53,8 +53,8 @@ class SummaryScreen extends StatelessWidget {
                     '${state.walletBalance.toStringAsFixed(0)} ₽',
                   ),
                   _buildStatRow(
-                    ' - ПОДУШКА',
-                    '${state.emergencyFund.toStringAsFixed(0)} ₽',
+                    ' - ОТЛОЖЕННЫЕ',
+                    '${state.deferredFund.toStringAsFixed(0)} ₽',
                   ),
                   _buildStatRow(
                     ' - ОБЯЗАТЕЛЬНЫЕ',
@@ -79,7 +79,7 @@ class SummaryScreen extends StatelessWidget {
                           textAlign: TextAlign.center,
                           style: GoogleFonts.getFont(
                             'Press Start 2P',
-                            fontSize: 8,
+                            fontSize: 9,
                             color: Colors.greenAccent,
                           ),
                         ),
@@ -102,12 +102,12 @@ class SummaryScreen extends StatelessWidget {
                     state.isWin
                         ? 'Отлично! Вы накопили на цель. Можно выбрать новую!'
                         : (state.mood <= 0
-                              ? 'ВЫГОРЕНИЕ! 💀\nВаше настроение упало до нуля. Психологическое состояние не позволяет продолжать.'
+                              ? 'ВЫГОРАНИЕ! 💀\nВаше настроение упало до нуля. Психологическое состояние не позволяет продолжать.'
                               : 'ЦЕЛЬ НЕ ДОСТИГНУТА! 📉\nВам не хватило накоплений до цели. Планируйте бюджет тщательнее!'),
                     textAlign: TextAlign.center,
                     style: GoogleFonts.getFont(
                       'Press Start 2P',
-                      fontSize: 8,
+                      fontSize: 9,
                       color: Colors.white.withValues(alpha: 0.8),
                       height: 1.5,
                     ),
@@ -120,7 +120,7 @@ class SummaryScreen extends StatelessWidget {
                         textAlign: TextAlign.center,
                         style: GoogleFonts.getFont(
                           'Press Start 2P',
-                          fontSize: 7,
+                          fontSize: 8,
                           color: Colors.orangeAccent,
                           height: 1.4,
                         ),
@@ -177,7 +177,7 @@ class SummaryScreen extends StatelessWidget {
                             : 'ПОПРОБОВАТЬ СНОВА ↻',
                         style: GoogleFonts.getFont(
                           'Press Start 2P',
-                          fontSize: 10,
+                          fontSize: 11,
                         ),
                       ),
                     ),
@@ -191,7 +191,7 @@ class SummaryScreen extends StatelessWidget {
                     ),
                     child: const Text(
                       'В ГЛАВНОЕ МЕНЮ',
-                      style: TextStyle(color: Colors.white, fontSize: 10),
+                      style: TextStyle(color: Colors.white, fontSize: 12),
                     ),
                   ),
                 ],
@@ -209,10 +209,10 @@ class SummaryScreen extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(label, style: const TextStyle(fontSize: 10, color: Colors.grey)),
+          Text(label, style: const TextStyle(fontSize: 12, color: Colors.grey)),
           Text(
             value,
-            style: const TextStyle(fontSize: 12, color: Colors.white),
+            style: const TextStyle(fontSize: 14, color: Colors.white),
           ),
         ],
       ),

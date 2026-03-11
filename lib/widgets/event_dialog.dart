@@ -31,14 +31,14 @@ class _EventDialogState extends State<EventDialog> {
       ),
       title: Text(
         widget.event.title.toUpperCase(),
-        style: GoogleFonts.getFont('Press Start 2P', fontSize: 14, color: _titleColor),
+        style: GoogleFonts.getFont('Press Start 2P', fontSize: 16, color: _titleColor),
       ),
       content: SingleChildScrollView(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(widget.event.description, style: GoogleFonts.getFont('Press Start 2P', fontSize: 10, height: 1.5)),
+            Text(widget.event.description, style: GoogleFonts.getFont('Press Start 2P', fontSize: 11, height: 1.5)),
             const SizedBox(height: 20),
             _buildEventSpecificContent(),
           ],
@@ -91,7 +91,7 @@ class _EventDialogState extends State<EventDialog> {
               onPressed: () => widget.onResolve(true, courseChoice: index),
               child: Text(
                 index < 2 ? '${widget.event.options![index]} — 5000₽' : widget.event.options![index],
-                style: GoogleFonts.getFont('Press Start 2P', fontSize: 8),
+                style: GoogleFonts.getFont('Press Start 2P', fontSize: 10),
               ),
             ),
           ),
@@ -141,7 +141,7 @@ class _EventDialogState extends State<EventDialog> {
         foregroundColor: isPrimary ? Colors.black : Colors.white,
       ),
       onPressed: onPressed,
-      child: Text(label, style: const TextStyle(fontSize: 8)),
+      child: Text(label, style: const TextStyle(fontSize: 10)),
     );
   }
 }

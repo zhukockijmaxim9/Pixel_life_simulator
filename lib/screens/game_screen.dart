@@ -17,6 +17,8 @@ class GameScreen extends StatefulWidget {
 
 class _GameScreenState extends State<GameScreen> {
   bool _isMealShowing = false;
+  bool _monthSummaryShown = false;
+
   @override
   void initState() {
     super.initState();
@@ -59,13 +61,141 @@ class _GameScreenState extends State<GameScreen> {
     showDialog(
       context: context,
       builder: (context) => CourseShopDialog(
-        walletBalance: state.walletBalance,
+        walletBalance: state.deferredFund,
         completedCourses: state.completedCourses,
         onBuy: (course) {
           state.buyCourse(course);
           Navigator.pop(context);
         },
       ),
+    );
+  }
+
+  void _showMonthSummaryDialog(BuildContext context, GameState state) {
+    if (state.showMonthSummary && !_monthSummaryShown) {
+      _monthSummaryShown = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        final rent = state.currentRent;
+        showDialog(
+          context: context,
+          barrierDismissible: false,
+          builder: (context) => AlertDialog(
+            backgroundColor: const Color(0xFF1E1E1E),
+            shape: const RoundedRectangleBorder(
+              side: BorderSide(color: Colors.cyanAccent, width: 3),
+              borderRadius: BorderRadius.zero,
+            ),
+            title: Text(
+              '📋 ОБЯЗАТЕЛЬНЫЕ РАСХОДЫ',
+              style: GoogleFonts.getFont(
+                'Press Start 2P',
+                fontSize: 11,
+                color: Colors.cyanAccent,
+              ),
+            ),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'В этом месяце вам предстоит оплатить:',
+                  style: GoogleFonts.getFont(
+                    'Press Start 2P',
+                    fontSize: 9,
+                    color: Colors.white70,
+                    height: 1.6,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                _summaryPaymentRow('🏠 Аренда жилья', '${rent.toInt()} ₽', 'день 2'),
+                const SizedBox(height: 8),
+                _summaryPaymentRow('💡 Коммунальные', '4 000 ₽', 'день 5'),
+                const SizedBox(height: 8),
+                _summaryPaymentRow('🚌 Транспорт', '3 000 ₽', 'день 10'),
+                const SizedBox(height: 16),
+                const Divider(color: Colors.white24),
+                const SizedBox(height: 8),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'ИТОГО:',
+                      style: GoogleFonts.getFont(
+                        'Press Start 2P',
+                        fontSize: 10,
+                        color: Colors.white,
+                      ),
+                    ),
+                    Text(
+                      '${(rent + 4000 + 3000).toInt()} ₽',
+                      style: GoogleFonts.getFont(
+                        'Press Start 2P',
+                        fontSize: 10,
+                        color: Colors.redAccent,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+            actions: [
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.cyanAccent,
+                    foregroundColor: Colors.black,
+                    shape: const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
+                  ),
+                  onPressed: () {
+                    state.dismissMonthSummary();
+                    Navigator.pop(context);
+                  },
+                  child: Text(
+                    'ПОНЯТНО',
+                    style: GoogleFonts.getFont('Press Start 2P', fontSize: 10),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      });
+    }
+  }
+
+  Widget _summaryPaymentRow(String label, String amount, String day) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Expanded(
+          child: Text(
+            label,
+            style: GoogleFonts.getFont(
+              'Press Start 2P',
+              fontSize: 8,
+              color: Colors.white,
+            ),
+          ),
+        ),
+        Text(
+          amount,
+          style: GoogleFonts.getFont(
+            'Press Start 2P',
+            fontSize: 8,
+            color: Colors.orangeAccent,
+          ),
+        ),
+        const SizedBox(width: 8),
+        Text(
+          day,
+          style: GoogleFonts.getFont(
+            'Press Start 2P',
+            fontSize: 7,
+            color: Colors.grey,
+          ),
+        ),
+      ],
     );
   }
 
@@ -80,6 +210,7 @@ class _GameScreenState extends State<GameScreen> {
       });
     }
 
+    _showMonthSummaryDialog(context, state);
     _showMealDialog(context, state);
 
     return Scaffold(
@@ -113,8 +244,8 @@ class _GameScreenState extends State<GameScreen> {
                                     Colors.yellowAccent,
                                   ),
                                   _accountPanel(
-                                    '🛡️',
-                                    state.emergencyFund,
+                                    '📦',
+                                    state.deferredFund,
                                     Colors.orangeAccent,
                                   ),
                                   _accountPanel(
@@ -138,7 +269,7 @@ class _GameScreenState extends State<GameScreen> {
                                     'МЕСЯЦ ${state.currentMonth}',
                                     style: GoogleFonts.getFont(
                                       'Press Start 2P',
-                                      fontSize: 8,
+                                      fontSize: 10,
                                       color: Colors.grey,
                                     ),
                                   ),
@@ -146,7 +277,7 @@ class _GameScreenState extends State<GameScreen> {
                                     'ДЕНЬ ${state.currentDay} / 30',
                                     style: GoogleFonts.getFont(
                                       'Press Start 2P',
-                                      fontSize: 8,
+                                      fontSize: 10,
                                       color: Colors.white,
                                     ),
                                   ),
@@ -158,7 +289,7 @@ class _GameScreenState extends State<GameScreen> {
                                     child: const Icon(
                                       Icons.account_balance_wallet,
                                       color: Colors.cyanAccent,
-                                      size: 16,
+                                      size: 18,
                                     ),
                                   ),
                                   GestureDetector(
@@ -167,7 +298,7 @@ class _GameScreenState extends State<GameScreen> {
                                     child: const Icon(
                                       Icons.shopping_cart,
                                       color: Colors.white,
-                                      size: 16,
+                                      size: 18,
                                     ),
                                   ),
                                   if (state.isCourseShopAvailable)
@@ -176,7 +307,7 @@ class _GameScreenState extends State<GameScreen> {
                                       child: const Icon(
                                         Icons.school,
                                         color: Colors.greenAccent,
-                                        size: 16,
+                                        size: 18,
                                       ),
                                     ),
                                 ],
@@ -194,14 +325,14 @@ class _GameScreenState extends State<GameScreen> {
                         const SizedBox(height: 20),
                         const Text(
                           'СУДЬБА В ПИКСЕЛЯХ',
-                          style: TextStyle(fontSize: 14, color: Colors.white),
+                          style: TextStyle(fontSize: 16, color: Colors.white),
                         ),
                         Padding(
                           padding: const EdgeInsets.only(top: 10),
                           child: Text(
                             'ЦЕЛЬ МЕСЯЦА: ${state.selectedGoal?.cost.toInt() ?? 0} ₽',
                             style: const TextStyle(
-                              fontSize: 8,
+                              fontSize: 10,
                               color: Colors.cyanAccent,
                             ),
                           ),
@@ -232,14 +363,14 @@ class _GameScreenState extends State<GameScreen> {
                                   children: [
                                     const Text(
                                       '🍎',
-                                      style: TextStyle(fontSize: 14),
+                                      style: TextStyle(fontSize: 16),
                                     ),
                                     const SizedBox(height: 2),
                                     Text(
                                       '${state.daysToHunger} ДН.',
                                       style: GoogleFonts.getFont(
                                         'Press Start 2P',
-                                        fontSize: 6,
+                                        fontSize: 8,
                                         color: state.daysToHunger <= 1
                                             ? Colors.redAccent
                                             : Colors.grey,
@@ -294,12 +425,12 @@ class _GameScreenState extends State<GameScreen> {
   Widget _accountPanel(String icon, double value, Color color) {
     return Column(
       children: [
-        Text(icon, style: const TextStyle(fontSize: 16)),
+        Text(icon, style: const TextStyle(fontSize: 18)),
         const SizedBox(height: 4),
         Text(
           value.toStringAsFixed(0),
           style: TextStyle(
-            fontSize: 9,
+            fontSize: 11,
             color: color,
             fontWeight: FontWeight.bold,
           ),

@@ -73,9 +73,9 @@ class TransactionDialog extends StatelessWidget {
           ),
           _accountButton(
             context,
-            "ПОДУШКА",
-            state.emergencyFund,
-            AccountType.emergency,
+            "ОТЛОЖЕННЫЕ",
+            state.deferredFund,
+            AccountType.deferred,
             Colors.orangeAccent,
           ),
           _accountButton(
@@ -122,8 +122,8 @@ class TransactionDialog extends StatelessWidget {
     switch (type) {
       case AccountType.wallet:
         return "КОШЕЛЕК";
-      case AccountType.emergency:
-        return "ПОДУШКА";
+      case AccountType.deferred:
+        return "ОТЛОЖЕННЫЕ";
       case AccountType.mandatory:
         return "ОБЯЗАТЕЛЬНЫЕ";
       case AccountType.savings:

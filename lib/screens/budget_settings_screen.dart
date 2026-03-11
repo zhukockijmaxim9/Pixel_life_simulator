@@ -12,7 +12,7 @@ class BudgetSettingsScreen extends StatefulWidget {
 
 class _BudgetSettingsScreenState extends State<BudgetSettingsScreen> {
   double _walletAlloc = 0;
-  double _emergencyAlloc = 0;
+  double _deferredAlloc = 0;
   double _mandatoryAlloc = 0;
   bool _initialized = false;
 
@@ -25,11 +25,11 @@ class _BudgetSettingsScreenState extends State<BudgetSettingsScreen> {
       bool midGame = state.currentDay > 1 || state.currentMonth > 1;
       if (midGame) {
         _walletAlloc = state.walletBalance;
-        _emergencyAlloc = state.emergencyFund;
+        _deferredAlloc = state.deferredFund;
         _mandatoryAlloc = state.mandatoryBalance;
       } else {
         _walletAlloc = state.walletAlloc;
-        _emergencyAlloc = state.emergencyAlloc;
+        _deferredAlloc = state.deferredAlloc;
         _mandatoryAlloc = state.mandatoryAlloc;
       }
       _initialized = true;
@@ -41,9 +41,8 @@ class _BudgetSettingsScreenState extends State<BudgetSettingsScreen> {
     final state = Provider.of<GameState>(context);
 
     // Calculate available money for redistribution
-    // FIX: Use current ACTUAL liquid total instead of "stale" original salary surplus
     double currentMonthSurplus =
-        state.walletBalance + state.emergencyFund + state.mandatoryBalance;
+        state.walletBalance + state.deferredFund + state.mandatoryBalance;
 
     return Scaffold(
       backgroundColor: const Color(0xFF121212),
@@ -73,7 +72,7 @@ class _BudgetSettingsScreenState extends State<BudgetSettingsScreen> {
                     'Остаток к распределению в этом месяце: ${currentMonthSurplus.toInt()} ₽',
                     style: GoogleFonts.getFont(
                       'Press Start 2P',
-                      fontSize: 7,
+                      fontSize: 9,
                       color: Colors.cyanAccent,
                     ),
                   ),
@@ -85,19 +84,19 @@ class _BudgetSettingsScreenState extends State<BudgetSettingsScreen> {
                     onChanged: (val) {
                       double remaining =
                           currentMonthSurplus -
-                          _emergencyAlloc -
+                          _deferredAlloc -
                           _mandatoryAlloc;
                       setState(() => _walletAlloc = val.clamp(0, remaining));
                     },
                   ),
                   _budgetSlider(
-                    label: 'ПОДУШКА',
-                    value: _emergencyAlloc,
+                    label: 'ОТЛОЖЕННЫЕ',
+                    value: _deferredAlloc,
                     max: currentMonthSurplus,
                     onChanged: (val) {
                       double remaining =
                           currentMonthSurplus - _walletAlloc - _mandatoryAlloc;
-                      setState(() => _emergencyAlloc = val.clamp(0, remaining));
+                      setState(() => _deferredAlloc = val.clamp(0, remaining));
                     },
                   ),
                   _budgetSlider(
@@ -106,7 +105,7 @@ class _BudgetSettingsScreenState extends State<BudgetSettingsScreen> {
                     max: currentMonthSurplus,
                     onChanged: (val) {
                       double remaining =
-                          currentMonthSurplus - _walletAlloc - _emergencyAlloc;
+                          currentMonthSurplus - _walletAlloc - _deferredAlloc;
                       setState(() => _mandatoryAlloc = val.clamp(0, remaining));
                     },
                   ),
@@ -124,18 +123,18 @@ class _BudgetSettingsScreenState extends State<BudgetSettingsScreen> {
                           'ИТОГО РАСПРЕДЕЛЕНО:',
                           style: GoogleFonts.getFont(
                             'Press Start 2P',
-                            fontSize: 7,
+                            fontSize: 9,
                             color: Colors.grey,
                           ),
                         ),
                         Text(
-                          '${(_walletAlloc + _emergencyAlloc + _mandatoryAlloc).toInt()} ₽',
+                          '${(_walletAlloc + _deferredAlloc + _mandatoryAlloc).toInt()} ₽',
                           style: GoogleFonts.getFont(
                             'Press Start 2P',
-                            fontSize: 7,
+                            fontSize: 9,
                             color:
                                 (_walletAlloc +
-                                        _emergencyAlloc +
+                                        _deferredAlloc +
                                         _mandatoryAlloc) >
                                     currentMonthSurplus
                                 ? Colors.redAccent
@@ -160,7 +159,7 @@ class _BudgetSettingsScreenState extends State<BudgetSettingsScreen> {
       title,
       style: GoogleFonts.getFont(
         'Press Start 2P',
-        fontSize: 10,
+        fontSize: 12,
         color: Colors.grey,
       ),
     );
@@ -182,7 +181,7 @@ class _BudgetSettingsScreenState extends State<BudgetSettingsScreen> {
               label,
               style: GoogleFonts.getFont(
                 'Press Start 2P',
-                fontSize: 7,
+                fontSize: 9,
                 color: Colors.white70,
               ),
             ),
@@ -190,7 +189,7 @@ class _BudgetSettingsScreenState extends State<BudgetSettingsScreen> {
               '${value.toInt()} ₽',
               style: GoogleFonts.getFont(
                 'Press Start 2P',
-                fontSize: 7,
+                fontSize: 9,
                 color: Colors.cyanAccent,
               ),
             ),
@@ -200,13 +199,10 @@ class _BudgetSettingsScreenState extends State<BudgetSettingsScreen> {
           value: value,
           min: 0,
           max: max,
-          // Remove divisions to allow custom snapping in onChanged
           divisions: null,
           activeColor: Colors.cyanAccent,
           onChanged: (val) {
-            // SNAP TO 500 LOGIC
             double snapped = (val / 500).round() * 500.0;
-            // Ensure we can always reach the VERY END even if not multiple of 500
             if ((max - val).abs() < 250) {
               snapped = max;
             } else {
@@ -220,7 +216,7 @@ class _BudgetSettingsScreenState extends State<BudgetSettingsScreen> {
   }
 
   Widget _applyButton(GameState state, double currentMonthSurplus) {
-    double totalAllocated = _walletAlloc + _emergencyAlloc + _mandatoryAlloc;
+    double totalAllocated = _walletAlloc + _deferredAlloc + _mandatoryAlloc;
     bool isFullyAllocated = (totalAllocated - currentMonthSurplus).abs() < 0.1;
 
     return Padding(
@@ -236,7 +232,7 @@ class _BudgetSettingsScreenState extends State<BudgetSettingsScreen> {
               ? () {
                   state.updateDistribution(
                     _walletAlloc,
-                    _emergencyAlloc,
+                    _deferredAlloc,
                     _mandatoryAlloc,
                   );
                   Navigator.pop(context);
@@ -256,7 +252,7 @@ class _BudgetSettingsScreenState extends State<BudgetSettingsScreen> {
                     'РАСПРЕДЕЛИТЕ ВЕСЬ БЮДЖЕТ',
                     style: GoogleFonts.getFont(
                       'Press Start 2P',
-                      fontSize: 6,
+                      fontSize: 8,
                       color: Colors.black54,
                     ),
                   ),

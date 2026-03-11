@@ -10,7 +10,19 @@ import 'events_data.dart';
 import 'merch_data.dart';
 
 class GameData {
-  static const double RENT = 7000;
+  // Dynamic rent based on job tier
+  static double getRent(int jobTier) {
+    switch (jobTier) {
+      case 1: return 7000;
+      case 2: return 9000;
+      case 3: return 12000;
+      case 4: return 16000;
+      case 5: return 22000;
+      case 6: return 30000;
+      default: return 7000;
+    }
+  }
+
   static const double MONTHLY_GOAL = 10000;
 
   static List<Job> get allJobs => JobsData.allJobs;
@@ -23,6 +35,5 @@ class GameData {
         ...EventsData.quizEvents,
       ];
 
-  static GameEvent get rentEvent => EventsData.rentEvent;
   static const List<int> quizDays = [9, 19, 29];
 }

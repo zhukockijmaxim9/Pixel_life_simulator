@@ -2,36 +2,36 @@
 
 class FinanceManager {
   double walletBalance = 0;
-  double emergencyFund = 0;
+  double deferredFund = 0;
   double mandatoryBalance = 0;
   double savingsGoal = 0;
 
   double walletAlloc = 10000;
-  double emergencyAlloc = 5000;
+  double deferredAlloc = 5000;
   double mandatoryAlloc = 15000;
 
   void resetBalances() {
     walletBalance = 0;
-    emergencyFund = 0;
+    deferredFund = 0;
     mandatoryBalance = 0;
     savingsGoal = 0;
   }
 
-  void updateDistribution(double wallet, double emergency, double mandatory) {
+  void updateDistribution(double wallet, double deferred, double mandatory) {
     walletAlloc = wallet;
-    emergencyAlloc = emergency;
+    deferredAlloc = deferred;
     mandatoryAlloc = mandatory;
 
-    double currentTotal = walletBalance + emergencyFund + mandatoryBalance;
+    double currentTotal = walletBalance + deferredFund + mandatoryBalance;
     if (currentTotal > 0) {
-      double totalAlloc = walletAlloc + emergencyAlloc + mandatoryAlloc;
+      double totalAlloc = walletAlloc + deferredAlloc + mandatoryAlloc;
       if (totalAlloc > 0) {
         walletBalance = currentTotal * (walletAlloc / totalAlloc);
-        emergencyFund = currentTotal * (emergencyAlloc / totalAlloc);
+        deferredFund = currentTotal * (deferredAlloc / totalAlloc);
         mandatoryBalance = currentTotal * (mandatoryAlloc / totalAlloc);
       }
     }
   }
 
-  double getTotalMoney() => walletBalance + emergencyFund + mandatoryBalance + savingsGoal;
+  double getTotalMoney() => walletBalance + deferredFund + mandatoryBalance + savingsGoal;
 }

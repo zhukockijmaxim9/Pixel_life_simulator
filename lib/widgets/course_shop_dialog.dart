@@ -36,7 +36,7 @@ class CourseShopDialog extends StatelessWidget {
                   'МАГАЗИН КУРСОВ',
                   style: GoogleFonts.getFont(
                     'Press Start 2P',
-                    fontSize: 12,
+                    fontSize: 14,
                     color: Colors.cyanAccent,
                   ),
                 ),
@@ -48,10 +48,10 @@ class CourseShopDialog extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             Text(
-              'Баланс: ${walletBalance.toInt()} ₽',
+              'Баланс отложенных: ${walletBalance.toInt()} ₽',
               style: GoogleFonts.getFont(
                 'Press Start 2P',
-                fontSize: 8,
+                fontSize: 10,
                 color: Colors.yellowAccent,
               ),
             ),
@@ -85,7 +85,7 @@ class CourseShopDialog extends StatelessWidget {
                                       course.title,
                                       style: GoogleFonts.getFont(
                                         'Press Start 2P',
-                                        fontSize: 10,
+                                        fontSize: 12,
                                         color: Colors.white,
                                       ),
                                     ),
@@ -94,7 +94,7 @@ class CourseShopDialog extends StatelessWidget {
                                       '${course.cost.toInt()} ₽',
                                       style: GoogleFonts.getFont(
                                         'Press Start 2P',
-                                        fontSize: 8,
+                                        fontSize: 10,
                                         color: Colors.cyanAccent,
                                       ),
                                     ),
@@ -108,7 +108,7 @@ class CourseShopDialog extends StatelessWidget {
                             course.description,
                             style: GoogleFonts.getFont(
                               'Press Start 2P',
-                              fontSize: 6,
+                              fontSize: 8,
                               color: Colors.grey,
                               height: 1.5,
                             ),
@@ -135,7 +135,7 @@ class CourseShopDialog extends StatelessWidget {
                                     : (canAfford ? 'КУПИТЬ' : 'НЕДОСТАТОЧНО СРЕДСТВ'),
                                 style: GoogleFonts.getFont(
                                   'Press Start 2P',
-                                  fontSize: 8,
+                                  fontSize: 10,
                                 ),
                               ),
                             ),

@@ -45,9 +45,15 @@ class GameState with ChangeNotifier {
   double _currentMonthSurplus = 0;
   double _currentMonthGoalContrib = 0;
 
+  // Carry-over: leftover money from previous month
+  double _carryOver = 0;
+  
+  // Month start summary
+  bool _showMonthSummary = false;
+
   // Getters (delegated or direct)
   double get walletBalance => _finance.walletBalance;
-  double get emergencyFund => _finance.emergencyFund;
+  double get deferredFund => _finance.deferredFund;
   double get mandatoryBalance => _finance.mandatoryBalance;
   double get savingsGoal => _finance.savingsGoal;
   double get totalMoney => _finance.getTotalMoney();
@@ -60,8 +66,6 @@ class GameState with ChangeNotifier {
   int get gamePoints => _gamePoints;
   Job? get selectedJob => _career.selectedJob;
   GameGoal? get selectedGoal {
-    // Note: selectedGoal was not in FinanceManager as it's a model reference, not a balance
-    // But savingsGoal is. We'll keep _selectedGoal here for simplicity unless we want a GoalManager.
     return _selectedGoal;
   }
   GameGoal? _selectedGoal;
@@ -80,12 +84,18 @@ class GameState with ChangeNotifier {
   bool get hasNewJobOpportunities => _career.hasNewOpportunities();
 
   double get walletAlloc => _finance.walletAlloc;
-  double get emergencyAlloc => _finance.emergencyAlloc;
+  double get deferredAlloc => _finance.deferredAlloc;
   double get mandatoryAlloc => _finance.mandatoryAlloc;
   double get goalAlloc => _selectedGoal?.monthlyContribution ?? 0;
 
-  void updateDistribution(double wallet, double emergency, double mandatory) {
-    _finance.updateDistribution(wallet, emergency, mandatory);
+  double get carryOver => _carryOver;
+  bool get showMonthSummary => _showMonthSummary;
+  
+  // Dynamic rent based on job tier
+  double get currentRent => GameData.getRent(_career.selectedJob?.tier ?? 1);
+
+  void updateDistribution(double wallet, double deferred, double mandatory) {
+    _finance.updateDistribution(wallet, deferred, mandatory);
     notifyListeners();
   }
 
@@ -114,14 +124,13 @@ class GameState with ChangeNotifier {
   static List<GameGoal> get availableGoals => GameData.availableGoals;
   static List<MerchItem> get shopItems => GameData.shopItems;
   static List<GameEvent> get allEvents => GameData.allEvents;
-  static GameEvent get rentEvent => GameData.rentEvent;
   static List<int> get quizDays => GameData.quizDays;
 
   void setupGame(
     Job job,
     GameGoal goal, {
     double walletAlloc = 10000,
-    double emergencyAlloc = 5000,
+    double deferredAlloc = 5000,
     double mandatoryAlloc = 15000,
     bool isNewGame = true,
   }) {
@@ -138,7 +147,10 @@ class GameState with ChangeNotifier {
       _pendingPayments.clear();
       _quizzesShownThisMonth = 0;
       _pendingQuizIds = [];
+      _carryOver = 0;
     } else {
+      // Carry over: save leftover from previous month
+      _carryOver = _finance.walletBalance + _finance.deferredFund + _finance.mandatoryBalance;
       _career.selectedJob = job;
       _career.eligibleForPromotion = false;
       _career.addJobToHistory(job);
@@ -146,21 +158,34 @@ class GameState with ChangeNotifier {
     
     _selectedGoal = goal;
     _finance.walletAlloc = walletAlloc;
-    _finance.emergencyAlloc = emergencyAlloc;
+    _finance.deferredAlloc = deferredAlloc;
     _finance.mandatoryAlloc = mandatoryAlloc;
 
     _currentMonthGoalContrib = _selectedGoal?.monthlyContribution ?? 0;
     _currentMonthSurplus = salary - _currentMonthGoalContrib;
 
-    double totalAlloc = _finance.walletAlloc + _finance.emergencyAlloc + _finance.mandatoryAlloc;
-    if (totalAlloc > _currentMonthSurplus && _currentMonthSurplus > 0) {
-      _finance.walletBalance += _currentMonthSurplus * (_finance.walletAlloc / totalAlloc);
-      _finance.emergencyFund += _currentMonthSurplus * (_finance.emergencyAlloc / totalAlloc);
-      _finance.mandatoryBalance += _currentMonthSurplus * (_finance.mandatoryAlloc / totalAlloc);
+    if (isNewGame) {
+      // First month: distribute salary only
+      double totalAlloc = _finance.walletAlloc + _finance.deferredAlloc + _finance.mandatoryAlloc;
+      if (totalAlloc > _currentMonthSurplus && _currentMonthSurplus > 0) {
+        _finance.walletBalance += _currentMonthSurplus * (_finance.walletAlloc / totalAlloc);
+        _finance.deferredFund += _currentMonthSurplus * (_finance.deferredAlloc / totalAlloc);
+        _finance.mandatoryBalance += _currentMonthSurplus * (_finance.mandatoryAlloc / totalAlloc);
+      } else {
+        _finance.walletBalance += _finance.walletAlloc;
+        _finance.deferredFund += _finance.deferredAlloc;
+        _finance.mandatoryBalance += _finance.mandatoryAlloc;
+      }
     } else {
-      _finance.walletBalance += _finance.walletAlloc;
-      _finance.emergencyFund += _finance.emergencyAlloc;
-      _finance.mandatoryBalance += _finance.mandatoryAlloc;
+      // Subsequent months: add salary on top of carried-over balances
+      // Reset balances to carry-over, then add new salary distribution
+      double totalAvailable = _carryOver + _currentMonthSurplus;
+      double totalAlloc = _finance.walletAlloc + _finance.deferredAlloc + _finance.mandatoryAlloc;
+      if (totalAlloc > 0) {
+        _finance.walletBalance = totalAvailable * (_finance.walletAlloc / totalAlloc);
+        _finance.deferredFund = totalAvailable * (_finance.deferredAlloc / totalAlloc);
+        _finance.mandatoryBalance = totalAvailable * (_finance.mandatoryAlloc / totalAlloc);
+      }
     }
 
     _finance.savingsGoal += _currentMonthGoalContrib;
@@ -169,6 +194,15 @@ class GameState with ChangeNotifier {
     _isPlanningPhase = false;
     _daysSinceLastMeal = 0;
     _mealThreshold = Random().nextInt(3) + 2;
+    
+    // Show month summary at start
+    _showMonthSummary = true;
+    
+    notifyListeners();
+  }
+
+  void dismissMonthSummary() {
+    _showMonthSummary = false;
     notifyListeners();
   }
 
@@ -255,7 +289,8 @@ class GameState with ChangeNotifier {
 
     if (_currentEvent == null) {
       if (_currentDay == 2) {
-        _currentEvent = const GameEvent(id: 'initial_rent', title: 'Аренда жилья', description: 'Хозяин квартиры ждёт оплаты.', type: EventType.payment, moneyImpact: -7000);
+        // Dynamic rent based on job tier
+        _currentEvent = GameEvent(id: 'initial_rent', title: 'Аренда жилья', description: 'Хозяин квартиры ждёт оплаты.', type: EventType.payment, moneyImpact: -currentRent);
         return;
       }
       if (_currentDay == 5) {
@@ -289,8 +324,8 @@ class GameState with ChangeNotifier {
       case AccountType.wallet:
         if (_finance.walletBalance >= deficit) { _finance.walletBalance -= deficit; } else { _finance.walletBalance = 0; _isGameOver = true; }
         break;
-      case AccountType.emergency:
-        if (_finance.emergencyFund >= deficit) { _finance.emergencyFund -= deficit; } else { _finance.emergencyFund = 0; _isGameOver = true; }
+      case AccountType.deferred:
+        if (_finance.deferredFund >= deficit) { _finance.deferredFund -= deficit; } else { _finance.deferredFund = 0; _isGameOver = true; }
         break;
       case AccountType.mandatory:
         if (_finance.mandatoryBalance >= deficit) { _finance.mandatoryBalance -= deficit; } else { _finance.mandatoryBalance = 0; _isGameOver = true; }
@@ -470,8 +505,9 @@ class GameState with ChangeNotifier {
   bool get isCourseShopAvailable => _currentMonth >= 2 && _currentDay <= 15;
 
   void buyCourse(Course course) {
-    if (_finance.walletBalance >= course.cost && !_career.completedCourses.contains(course.title)) {
-      _finance.walletBalance -= course.cost;
+    // Courses are bought from the deferred fund
+    if (_finance.deferredFund >= course.cost && !_career.completedCourses.contains(course.title)) {
+      _finance.deferredFund -= course.cost;
       _career.completedCourses.add(course.title);
       notifyListeners();
     }
