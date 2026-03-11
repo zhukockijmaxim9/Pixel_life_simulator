@@ -33,6 +33,8 @@ class GameState with ChangeNotifier {
   int _mealThreshold = Random().nextInt(3) + 2;
   bool _needsMeal = false;
   bool _coursesOffered = false; // day 15 course event fired this month
+  int _quizzesShownThisMonth = 0;
+  List<String> _pendingQuizIds = [];
 
   Job? _selectedJob;
   GameGoal? _selectedGoal;
@@ -222,6 +224,8 @@ class GameState with ChangeNotifier {
       _overtimeCount = 0;
       _pendingPayments.clear();
       _eligibleForPromotion = false;
+      _quizzesShownThisMonth = 0;
+      _pendingQuizIds = []; // Reset quiz stack for new game
     }
 
     // Add job to history
@@ -275,6 +279,7 @@ class GameState with ChangeNotifier {
     _daysSinceLastMeal = 0;
     _overtimeCount = 0;
     _pendingPayments.clear();
+    _quizzesShownThisMonth = 0;
 
     notifyListeners();
   }
@@ -383,7 +388,9 @@ class GameState with ChangeNotifier {
     }
 
     // Quiz on scheduled days (9, 19, 29)
-    if (quizDays.contains(_currentDay) && _currentEvent == null) {
+    if (quizDays.contains(_currentDay) &&
+        _currentEvent == null &&
+        _quizzesShownThisMonth < 2) {
       _triggerQuiz();
       if (_currentEvent != null) return;
     }
@@ -540,11 +547,20 @@ class GameState with ChangeNotifier {
   }
 
   void _triggerQuiz() {
-    List<GameEvent> quizEvents = allEvents
-        .where((e) => e.type == EventType.quiz)
-        .toList();
-    if (quizEvents.isNotEmpty) {
-      _currentEvent = quizEvents[Random().nextInt(quizEvents.length)];
+    // 1. Refill and shuffle if empty
+    if (_pendingQuizIds.isEmpty) {
+      _pendingQuizIds = GameData.allEvents
+          .where((e) => e.type == EventType.quiz)
+          .map((e) => e.id)
+          .toList();
+      _pendingQuizIds.shuffle();
+    }
+
+    // 2. Pick the next one from the "stack"
+    if (_pendingQuizIds.isNotEmpty) {
+      String nextId = _pendingQuizIds.removeLast();
+      _currentEvent = GameData.allEvents.firstWhere((e) => e.id == nextId);
+      _quizzesShownThisMonth++;
     }
   }
 
@@ -598,7 +614,7 @@ class GameState with ChangeNotifier {
     if (_currentEvent!.type == EventType.quiz) {
       if (quizAnswerIndex == _currentEvent!.correctAnswerIndex) {
         _walletBalance += _currentEvent!.moneyImpact;
-        _gamePoints += 100;
+        _gamePoints += 10;
         _mood += 10;
       } else {
         _mood -= 10;
