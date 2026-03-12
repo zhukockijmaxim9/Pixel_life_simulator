@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../models/goal.dart';
 
+/// Упрощённая карточка цели в общем тёмном стиле игры.
 class GoalCard extends StatelessWidget {
   final GameGoal goal;
   final bool isSelected;
@@ -19,57 +20,91 @@ class GoalCard extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        margin: const EdgeInsets.only(bottom: 12),
+        margin: const EdgeInsets.only(bottom: 16),
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: isSelected ? Colors.white : const Color(0xFF1E1E1E),
+          color: const Color(0xFF1E1E1E),
           border: Border.all(
-            color: isSelected ? Colors.cyanAccent : Colors.white24,
-            width: isSelected ? 2 : 1,
+            color: isSelected ? const Color(0xFFFFA726) : const Color(0xFF444444),
+            width: 2,
           ),
+          boxShadow: isSelected
+              ? [
+                  BoxShadow(
+                    color: const Color(0xFFFFA726).withValues(alpha: 0.35),
+                    blurRadius: 6,
+                    offset: const Offset(0, 2),
+                  ),
+                ]
+              : null,
         ),
         child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const Text('🎯', style: TextStyle(fontSize: 24)),
-            const SizedBox(width: 16),
+            const SizedBox(width: 12),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
                     goal.title,
-                    style: TextStyle(
-                      fontSize: 10,
-                      color: isSelected ? Colors.black : Colors.white,
+                    style: const TextStyle(
+                      fontFamily: 'Hometown',
+                      fontSize: 20,
+                      color: Colors.white,
                     ),
                   ),
-                  const SizedBox(height: 4),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        '${goal.cost.toInt()} ₽  (${goal.monthlyContribution.toInt()} ₽/мес)',
-                        style: TextStyle(
-                          fontSize: 7,
-                          color: isSelected ? Colors.black54 : Colors.grey,
-                        ),
-                      ),
-                      Text(
-                        '+${goal.pointsReward} 🏆',
-                        style: TextStyle(
-                          fontSize: 7,
-                          color: isSelected
-                              ? Colors.black87
-                              : Colors.cyanAccent,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ],
+                  const SizedBox(height: 6),
+                  Text(
+                    '${goal.cost.toInt()} ₽',
+                    style: const TextStyle(
+                      fontFamily: 'Hometown',
+                      fontSize: 18,
+                      color: Color(0xFFFFE082),
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    '${goal.monthlyContribution.toInt()} ₽/мес',
+                    style: TextStyle(
+                      fontFamily: 'Hometown',
+                      fontSize: 14,
+                      color: Colors.white.withValues(alpha: 0.85),
+                    ),
                   ),
                 ],
               ),
             ),
-            if (isSelected) const Icon(Icons.check_circle, color: Colors.green),
+            const SizedBox(width: 8),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Text(
+                  '+${goal.pointsReward}',
+                  style: const TextStyle(
+                    fontFamily: 'Hometown',
+                    fontSize: 14,
+                    color: Color(0xFFFF2E93),
+                  ),
+                ),
+                const Text(
+                  'баллов',
+                  style: TextStyle(
+                    fontSize: 10,
+                    color: Color(0xFFFF2E93),
+                  ),
+                ),
+                if (isSelected) ...[
+                  const SizedBox(height: 12),
+                  const Icon(
+                    Icons.check_circle,
+                    color: Color(0xFF66BB6A),
+                    size: 20,
+                  ),
+                ],
+              ],
+            ),
           ],
         ),
       ),

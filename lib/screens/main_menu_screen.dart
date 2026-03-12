@@ -28,29 +28,34 @@ class MainMenuScreen extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            // Title with shadow for "Pixel" look
-            Stack(
-              children: [
-                Text(
-                  'PIXEL PURSE',
-                  style: GoogleFonts.getFont(
-                    'Press Start 2P',
-                    fontSize: 32,
-                    color: Colors.cyanAccent.withValues(alpha: 0.3),
-                  ),
+            // Градиентный логотип PIXEL PURSE
+            ShaderMask(
+              shaderCallback: (bounds) {
+                const gradient = LinearGradient(
+                  begin: Alignment.centerLeft,
+                  end: Alignment.centerRight,
+                  stops: [0.0, 0.33, 0.58, 0.78, 1.0],
+                  colors: [
+                    Color(0xFF8F1162),
+                    Color(0xFFC0045C),
+                    Color(0xFFC5035C),
+                    Color(0xFFE74B31),
+                    Color(0xFFEB9B2A),
+                  ],
+                );
+                return gradient.createShader(
+                  Rect.fromLTWH(0, 0, bounds.width, bounds.height),
+                );
+              },
+              child: Text(
+                'PIXEL PURSE',
+                style: GoogleFonts.getFont(
+                  'Press Start 2P',
+                  fontSize: 32,
+                  color: Colors.white,
+                  letterSpacing: 2,
                 ),
-                Padding(
-                  padding: const EdgeInsets.only(top: 4, left: 4),
-                  child: Text(
-                    'PIXEL PURSE',
-                    style: GoogleFonts.getFont(
-                      'Press Start 2P',
-                      fontSize: 32,
-                      color: Colors.white,
-                    ),
-                  ),
-                ),
-              ],
+              ),
             ),
             const SizedBox(height: 10),
             Text(
@@ -64,22 +69,14 @@ class MainMenuScreen extends StatelessWidget {
             const SizedBox(height: 80),
             // Play Buttons
             if (hasSave) ...[
-              ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 40,
-                    vertical: 20,
-                  ),
-                ),
-                onPressed: () {
-                  Navigator.pushNamed(context, '/game');
-                },
-                child: const Text('ПРОДОЛЖИТЬ ИГРУ'),
+              _primaryButton(
+                label: 'ПРОДОЛЖИТЬ ИГРУ',
+                onPressed: () => Navigator.pushNamed(context, '/game'),
               ),
               const SizedBox(height: 20),
               OutlinedButton(
                 style: OutlinedButton.styleFrom(
-                  side: const BorderSide(color: Colors.redAccent, width: 2),
+                  side: const BorderSide(color: Color(0xFFE74B31), width: 2),
                   padding: const EdgeInsets.symmetric(
                     horizontal: 30,
                     vertical: 15,
@@ -95,7 +92,7 @@ class MainMenuScreen extends StatelessWidget {
                       backgroundColor: const Color(0xFF1E1E1E),
                       title: Text(
                         'НОВАЯ ИГРА',
-                        style: GoogleFonts.getFont('Press Start 2P', fontSize: 12, color: Colors.redAccent),
+                        style: GoogleFonts.getFont('Press Start 2P', fontSize: 12, color: Color(0xFFE74B31)),
                       ),
                       content: Text(
                         'Вы уверены, что хотите начать заново? Текущий прогресс будет удален.',
@@ -112,7 +109,7 @@ class MainMenuScreen extends StatelessWidget {
                             state.clearSaveAndReset();
                             Navigator.pushNamed(context, '/job_select');
                           },
-                          child: Text('НАЧАТЬ', style: GoogleFonts.getFont('Press Start 2P', fontSize: 10, color: Colors.redAccent)),
+                          child: Text('НАЧАТЬ', style: GoogleFonts.getFont('Press Start 2P', fontSize: 10, color: Color(0xFFE74B31))),
                         ),
                       ],
                     ),
@@ -123,22 +120,14 @@ class MainMenuScreen extends StatelessWidget {
                   style: GoogleFonts.getFont(
                     'Press Start 2P',
                     fontSize: 10,
-                    color: Colors.redAccent,
+                    color: const Color(0xFFE74B31),
                   ),
                 ),
               ),
             ] else ...[
-              ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 40,
-                    vertical: 20,
-                  ),
-                ),
-                onPressed: () {
-                  Navigator.pushNamed(context, '/job_select');
-                },
-                child: const Text('НАЧАТЬ ИГРУ'),
+              _primaryButton(
+                label: 'НАЧАТЬ ИГРУ',
+                onPressed: () => Navigator.pushNamed(context, '/job_select'),
               ),
             ],
             const SizedBox(height: 20),
@@ -162,18 +151,68 @@ class MainMenuScreen extends StatelessWidget {
                 style: GoogleFonts.getFont(
                   'Press Start 2P',
                   fontSize: 10,
-                  color: Colors.white,
+                  color: const Color(0xFFEB9B2A),
                 ),
               ),
             ),
             const SizedBox(height: 60),
             const Text(
               'Powered by Neoflex',
-              style: TextStyle(fontSize: 10, color: Color(0xFF005EB8)),
+              style: TextStyle(fontSize: 10, color: Color(0xFFC0045C)),
             ),
           ],
         ),
       ),
     );
   }
+}
+
+class _PrimaryGradientButton extends StatelessWidget {
+  final String label;
+  final VoidCallback onPressed;
+
+  const _PrimaryGradientButton({
+    required this.label,
+    required this.onPressed,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: 260,
+      height: 56,
+      child: DecoratedBox(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.centerLeft,
+            end: Alignment.centerRight,
+            stops: [0.0, 0.33, 0.58, 0.78, 1.0],
+            colors: [
+              Color(0xFF8F1162),
+              Color(0xFFC0045C),
+              Color(0xFFC5035C),
+              Color(0xFFE74B31),
+              Color(0xFFEB9B2A),
+            ],
+          ),
+          borderRadius: BorderRadius.zero,
+        ),
+        child: TextButton(
+          onPressed: onPressed,
+          child: Text(
+            label,
+            style: GoogleFonts.getFont(
+              'Press Start 2P',
+              fontSize: 12,
+              color: Colors.white,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+Widget _primaryButton({required String label, required VoidCallback onPressed}) {
+  return _PrimaryGradientButton(label: label, onPressed: onPressed);
 }

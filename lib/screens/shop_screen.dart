@@ -13,36 +13,19 @@ class ShopScreen extends StatelessWidget {
       appBar: AppBar(
         backgroundColor: const Color(0xFF161616),
         elevation: 0,
+        leadingWidth: 48,
         leading: IconButton(
-          icon: const Icon(
-            Icons.arrow_back_ios_new,
-            size: 16,
-            color: Color(0xFFFF2E93),
-          ),
+          padding: const EdgeInsets.only(left: 12),
           onPressed: () => Navigator.of(context).pop(),
-        ),
-        title: RichText(
-          text: TextSpan(
-            style: GoogleFonts.getFont(
-              'Press Start 2P',
-              fontSize: 12,
-              letterSpacing: 1.5,
-            ),
-            children: const [
-              TextSpan(
-                text: 'NEOFLEX ',
-                style: TextStyle(color: Color(0xFFFF2E93)),
-              ),
-              TextSpan(
-                text: 'MERCH ',
-                style: TextStyle(color: Colors.white),
-              ),
-              TextSpan(
-                text: 'SHOP',
-                style: TextStyle(color: Color(0xFFFFA500)),
-              ),
-            ],
+          icon: const _GradientText(
+            '<',
+            fontSize: 14,
           ),
+        ),
+        title: const _GradientText(
+          'NEOFLEX MERCH SHOP',
+          fontSize: 12,
+          textAlign: TextAlign.center,
         ),
         centerTitle: true,
         bottom: PreferredSize(
@@ -64,14 +47,10 @@ class ShopScreen extends StatelessWidget {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Text(
+                    _GradientText(
                       'ТВОИ БАЛЛЫ: ${state.gamePoints}',
-                      style: GoogleFonts.getFont(
-                        'Press Start 2P',
-                        fontSize: 12,
-                        color: Colors.white,
-                        letterSpacing: 1.5,
-                      ),
+                      fontSize: 12,
+                      textAlign: TextAlign.center,
                     ),
                     const SizedBox(height: 8),
                     Text(
@@ -148,12 +127,16 @@ class ShopScreen extends StatelessWidget {
                                 decoration: BoxDecoration(
                                   gradient: canAfford
                                       ? const LinearGradient(
-                                          colors: [
-                                            Color(0xFFFF7A00),
-                                            Color(0xFFFF2E93),
-                                          ],
                                           begin: Alignment.centerLeft,
                                           end: Alignment.centerRight,
+                                          stops: [0.0, 0.2, 0.49, 0.71, 0.95],
+                                          colors: [
+                                            Color(0xFFEA872B),
+                                            Color(0xFFE63E32),
+                                            Color(0xFFD40655),
+                                            Color(0xFFAB095F),
+                                            Color(0xFF8B1163),
+                                          ],
                                         )
                                       : const LinearGradient(
                                           colors: [
@@ -187,6 +170,52 @@ class ShopScreen extends StatelessWidget {
             ],
           );
         },
+      ),
+    );
+  }
+}
+
+class _GradientText extends StatelessWidget {
+  final String text;
+  final double fontSize;
+  final TextAlign? textAlign;
+
+  const _GradientText(
+    this.text, {
+    required this.fontSize,
+    this.textAlign,
+  });
+
+  static const LinearGradient _gradient = LinearGradient(
+    begin: Alignment.centerLeft,
+    end: Alignment.centerRight,
+    stops: [0.0, 0.33, 0.58, 0.78, 1.0],
+    colors: [
+      Color(0xFF8F1162),
+      Color(0xFFC0045C),
+      Color(0xFFC5035C),
+      Color(0xFFE74B31),
+      Color(0xFFEB9B2A),
+    ],
+  );
+
+  @override
+  Widget build(BuildContext context) {
+    return ShaderMask(
+      shaderCallback: (bounds) {
+        return _gradient.createShader(
+          Rect.fromLTWH(0, 0, bounds.width, bounds.height),
+        );
+      },
+      child: Text(
+        text,
+        textAlign: textAlign,
+        style: GoogleFonts.getFont(
+          'Press Start 2P',
+          fontSize: fontSize,
+          letterSpacing: 1.5,
+          color: Colors.white,
+        ),
       ),
     );
   }
