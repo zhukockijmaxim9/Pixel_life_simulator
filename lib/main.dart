@@ -11,10 +11,13 @@ import 'screens/shop_screen.dart';
 import 'screens/summary_screen.dart';
 import 'screens/budget_settings_screen.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  final gameState = GameState();
+  await gameState.loadFromDisk();
   runApp(
     MultiProvider(
-      providers: [ChangeNotifierProvider(create: (_) => GameState())],
+      providers: [ChangeNotifierProvider.value(value: gameState)],
       child: const PixelPurseApp(),
     ),
   );

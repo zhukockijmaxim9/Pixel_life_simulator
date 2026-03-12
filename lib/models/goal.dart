@@ -10,4 +10,18 @@ class GameGoal {
     required this.pointsReward,
     required this.monthlyContribution,
   });
+
+  Map<String, dynamic> toJson() => {
+        'title': title,
+        'cost': cost,
+        'pointsReward': pointsReward,
+        'monthlyContribution': monthlyContribution,
+      };
+
+  factory GameGoal.fromJson(Map<String, dynamic> json) => GameGoal(
+        title: json['title'],
+        cost: json['cost'].toDouble(),
+        pointsReward: json['pointsReward'],
+        monthlyContribution: json['monthlyContribution'].toDouble(),
+      );
 }

@@ -14,4 +14,22 @@ class Job {
     this.requiredCourse,
     this.requiredPreviousJobs = const [],
   });
+
+  Map<String, dynamic> toJson() => {
+        'title': title,
+        'salary': salary,
+        'icon': icon,
+        'tier': tier,
+        'requiredCourse': requiredCourse,
+        'requiredPreviousJobs': requiredPreviousJobs,
+      };
+
+  factory Job.fromJson(Map<String, dynamic> json) => Job(
+        title: json['title'],
+        salary: json['salary'].toDouble(),
+        icon: json['icon'],
+        tier: json['tier'] ?? 1,
+        requiredCourse: json['requiredCourse'],
+        requiredPreviousJobs: List<String>.from(json['requiredPreviousJobs'] ?? []),
+      );
 }

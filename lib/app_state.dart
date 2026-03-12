@@ -1,5 +1,7 @@
 import 'dart:math';
+import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import 'models/enums.dart';
 import 'models/job.dart';
@@ -97,6 +99,7 @@ class GameState with ChangeNotifier {
   void updateDistribution(double wallet, double deferred, double mandatory) {
     _finance.updateDistribution(wallet, deferred, mandatory);
     notifyListeners();
+    saveToDisk();
   }
 
   void setGoal(GameGoal goal) {
@@ -116,6 +119,7 @@ class GameState with ChangeNotifier {
 
     _currentMonthSurplus = salary - _currentMonthGoalContrib;
     notifyListeners();
+    saveToDisk();
   }
 
   List<Job> getAvailableJobsForMonth() => _career.getAvailableJobs();
@@ -199,11 +203,13 @@ class GameState with ChangeNotifier {
     _showMonthSummary = true;
     
     notifyListeners();
+    saveToDisk();
   }
 
   void dismissMonthSummary() {
     _showMonthSummary = false;
     notifyListeners();
+    saveToDisk();
   }
 
   void startNewMonth() {
@@ -223,6 +229,7 @@ class GameState with ChangeNotifier {
     _quizzesShownThisMonth = 0;
 
     notifyListeners();
+    saveToDisk();
   }
 
   Future<void> nextTurn() async {
@@ -240,12 +247,14 @@ class GameState with ChangeNotifier {
       if (_isGameOver || _needsMeal || _currentEvent != null) break;
       _processSingleDay();
       notifyListeners();
+      saveToDisk();
       await Future.delayed(const Duration(milliseconds: 400));
     }
 
     if (!_needsMeal && !_isGameOver && _currentEvent == null) {
       _triggerRandomEvent();
       notifyListeners();
+      saveToDisk();
     }
   }
 
@@ -338,6 +347,7 @@ class GameState with ChangeNotifier {
     _pendingTransaction = null;
     _validateStats();
     notifyListeners();
+    saveToDisk();
   }
 
   void chooseMeal(MealType type) {
@@ -354,6 +364,7 @@ class GameState with ChangeNotifier {
 
     _validateStats();
     notifyListeners();
+    saveToDisk();
   }
 
   void _applyMandatoryExpense(double cost) {
@@ -466,6 +477,7 @@ class GameState with ChangeNotifier {
     }
     _validateStats();
     notifyListeners();
+    saveToDisk();
   }
 
   void handleEventChoice(bool accepted) {
@@ -480,6 +492,7 @@ class GameState with ChangeNotifier {
     _currentEvent = null;
     _validateStats();
     notifyListeners();
+    saveToDisk();
   }
 
   void _applyFinancialImpact(double amount) {
@@ -492,7 +505,7 @@ class GameState with ChangeNotifier {
   }
 
   void buyItem(MerchItem item) {
-    if (_gamePoints >= item.price) { _gamePoints -= item.price; _inventory.add(item); notifyListeners(); }
+    if (_gamePoints >= item.price) { _gamePoints -= item.price; _inventory.add(item); notifyListeners(); saveToDisk(); }
   }
 
   void _validateStats() {
@@ -500,8 +513,8 @@ class GameState with ChangeNotifier {
     if (_mood <= 0) { _isGameOver = true; _isWin = false; }
   }
 
-  void updateWallet(double amount) { _finance.walletBalance += amount; notifyListeners(); }
-  void updateMood(double amount) { _mood += amount; _validateStats(); notifyListeners(); }
+  void updateWallet(double amount) { _finance.walletBalance += amount; notifyListeners(); saveToDisk(); }
+  void updateMood(double amount) { _mood += amount; _validateStats(); notifyListeners(); saveToDisk(); }
   bool get isCourseShopAvailable => _currentMonth >= 2 && _currentDay <= 15;
 
   void buyCourse(Course course) {
@@ -510,6 +523,130 @@ class GameState with ChangeNotifier {
       _finance.deferredFund -= course.cost;
       _career.completedCourses.add(course.title);
       notifyListeners();
+      saveToDisk();
     }
+  }
+
+  // --- Persistence ---
+
+  Map<String, dynamic> toJson() => {
+        'mood': _mood,
+        'currentDay': _currentDay,
+        'currentMonth': _currentMonth,
+        'gamePoints': _gamePoints,
+        'daysSinceLastMeal': _daysSinceLastMeal,
+        'mealThreshold': _mealThreshold,
+        'needsMeal': _needsMeal,
+        'quizzesShownThisMonth': _quizzesShownThisMonth,
+        'pendingQuizIds': _pendingQuizIds,
+        'currentEvent': _currentEvent?.toJson(),
+        'isGameOver': _isGameOver,
+        'isWin': _isWin,
+        'isPlanningPhase': _isPlanningPhase,
+        'inventory': _inventory.map((i) => i.toJson()).toList(),
+        'pendingTransaction': _pendingTransaction?.toJson(),
+        'eventHistory': _eventHistory,
+        'overtimeCount': _overtimeCount,
+        'pendingPayments': _pendingPayments.map((p) => p.toJson()).toList(),
+        'currentMonthSurplus': _currentMonthSurplus,
+        'currentMonthGoalContrib': _currentMonthGoalContrib,
+        'carryOver': _carryOver,
+        'showMonthSummary': _showMonthSummary,
+        'selectedGoal': _selectedGoal?.toJson(),
+        'career': _career.toJson(),
+        'finance': _finance.toJson(),
+      };
+
+  Future<void> saveToDisk() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final data = jsonEncode(toJson());
+      await prefs.setString('game_state', data);
+    } catch (e) {
+      debugPrint('Error saving game state: $e');
+    }
+  }
+
+  Future<void> loadFromDisk() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final data = prefs.getString('game_state');
+      if (data != null) {
+        final Map<String, dynamic> json = jsonDecode(data);
+        _mood = json['mood']?.toDouble() ?? 60;
+        _currentDay = json['currentDay'] ?? 1;
+        _currentMonth = json['currentMonth'] ?? 1;
+        _gamePoints = json['gamePoints'] ?? 0;
+        _daysSinceLastMeal = json['daysSinceLastMeal'] ?? 0;
+        _mealThreshold = json['mealThreshold'] ?? 2;
+        _needsMeal = json['needsMeal'] ?? false;
+        _quizzesShownThisMonth = json['quizzesShownThisMonth'] ?? 0;
+        _pendingQuizIds = List<String>.from(json['pendingQuizIds'] ?? []);
+        _currentEvent = json['currentEvent'] != null ? GameEvent.fromJson(json['currentEvent']) : null;
+        _isGameOver = json['isGameOver'] ?? false;
+        _isWin = json['isWin'] ?? false;
+        _isPlanningPhase = json['isPlanningPhase'] ?? false;
+        _inventory.clear();
+        if (json['inventory'] != null) {
+          _inventory.addAll((json['inventory'] as List).map((i) => MerchItem.fromJson(i)));
+        }
+        _pendingTransaction = json['pendingTransaction'] != null ? PendingTransaction.fromJson(json['pendingTransaction']) : null;
+        _eventHistory.clear();
+        if (json['eventHistory'] != null) {
+          _eventHistory.addAll(Map<String, int>.from(json['eventHistory']));
+        }
+        _overtimeCount = json['overtimeCount'] ?? 0;
+        _pendingPayments.clear();
+        if (json['pendingPayments'] != null) {
+          _pendingPayments.addAll((json['pendingPayments'] as List).map((p) => PendingPayment.fromJson(p)));
+        }
+        _currentMonthSurplus = json['currentMonthSurplus']?.toDouble() ?? 0;
+        _currentMonthGoalContrib = json['currentMonthGoalContrib']?.toDouble() ?? 0;
+        _carryOver = json['carryOver']?.toDouble() ?? 0;
+        _showMonthSummary = json['showMonthSummary'] ?? false;
+        _selectedGoal = json['selectedGoal'] != null ? GameGoal.fromJson(json['selectedGoal']) : null;
+        _career.fromJson(json['career'] ?? {});
+        _finance.fromJson(json['finance'] ?? {});
+        notifyListeners();
+      }
+    } catch (e) {
+      debugPrint('Error loading game state: $e');
+    }
+  }
+
+  Future<void> clearSave() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove('game_state');
+  }
+
+  Future<void> clearSaveAndReset() async {
+    await clearSave();
+    
+    _currentDay = 1;
+    _currentMonth = 1;
+    _gamePoints = 0;
+    _finance.resetBalances();
+    _mood = 60;
+    _career.reset(null);
+    _eventHistory.clear();
+    _inventory.clear();
+    _overtimeCount = 0;
+    _pendingPayments.clear();
+    _quizzesShownThisMonth = 0;
+    _pendingQuizIds = [];
+    _carryOver = 0;
+    _selectedGoal = null;
+    _isGameOver = false;
+    _isWin = false;
+    _isPlanningPhase = false;
+    _needsMeal = false;
+    _daysSinceLastMeal = 0;
+    _currentEvent = null;
+    _pendingTransaction = null;
+    _currentMonthSurplus = 0;
+    _currentMonthGoalContrib = 0;
+    _showMonthSummary = false;
+    
+    notifyListeners();
   }
 }

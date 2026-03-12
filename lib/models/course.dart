@@ -12,4 +12,20 @@ class Course {
     required this.icon,
     required this.description,
   });
+
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'title': title,
+        'cost': cost,
+        'icon': icon,
+        'description': description,
+      };
+
+  factory Course.fromJson(Map<String, dynamic> json) => Course(
+        id: json['id'],
+        title: json['title'],
+        cost: json['cost'].toDouble(),
+        icon: json['icon'],
+        description: json['description'],
+      );
 }
