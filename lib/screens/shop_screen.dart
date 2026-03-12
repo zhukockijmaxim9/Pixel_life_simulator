@@ -9,47 +9,90 @@ class ShopScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF121212),
+      backgroundColor: const Color(0xFF111111),
       appBar: AppBar(
-        title: Text(
-          'NEOFLEX MERCH',
-          style: GoogleFonts.getFont('Press Start 2P', fontSize: 16),
-        ),
-        backgroundColor: const Color(0xFF005EB8), // Neoflex Blue
+        backgroundColor: const Color(0xFF161616),
         elevation: 0,
+        leading: IconButton(
+          icon: const Icon(
+            Icons.arrow_back_ios_new,
+            size: 16,
+            color: Color(0xFFFF2E93),
+          ),
+          onPressed: () => Navigator.of(context).pop(),
+        ),
+        title: RichText(
+          text: TextSpan(
+            style: GoogleFonts.getFont(
+              'Press Start 2P',
+              fontSize: 12,
+              letterSpacing: 1.5,
+            ),
+            children: const [
+              TextSpan(
+                text: 'NEOFLEX ',
+                style: TextStyle(color: Color(0xFFFF2E93)),
+              ),
+              TextSpan(
+                text: 'MERCH ',
+                style: TextStyle(color: Colors.white),
+              ),
+              TextSpan(
+                text: 'SHOP',
+                style: TextStyle(color: Color(0xFFFFA500)),
+              ),
+            ],
+          ),
+        ),
+        centerTitle: true,
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(4),
+          child: Container(
+            height: 4,
+            color: const Color(0xFF2B2B2B),
+          ),
+        ),
       ),
       body: Consumer<GameState>(
         builder: (context, state, child) {
           return Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(20),
-                color: const Color(0xFF1E1E1E),
+                padding: const EdgeInsets.symmetric(vertical: 24),
+                color: const Color(0xFF111111),
                 child: Column(
+                  mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(
                       'ТВОИ БАЛЛЫ: ${state.gamePoints}',
                       style: GoogleFonts.getFont(
                         'Press Start 2P',
-                        fontSize: 14,
-                        color: Colors.yellowAccent,
+                        fontSize: 12,
+                        color: Colors.white,
+                        letterSpacing: 1.5,
                       ),
                     ),
-                    const SizedBox(height: 10),
-                    const Text(
-                      'Официальный мерч Neoflex',
-                      style: TextStyle(fontSize: 10, color: Colors.grey),
+                    const SizedBox(height: 8),
+                    Text(
+                      'официальный мерч neoflex',
+                      style: GoogleFonts.getFont(
+                        'Press Start 2P',
+                        fontSize: 8,
+                        color: const Color(0xFF888888),
+                        letterSpacing: 1.2,
+                      ),
                     ),
                   ],
                 ),
               ),
               Expanded(
                 child: GridView.builder(
-                  padding: const EdgeInsets.all(16),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                   gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                     crossAxisCount: 2,
-                    childAspectRatio: 0.8,
+                    childAspectRatio: 0.78,
                     crossAxisSpacing: 16,
                     mainAxisSpacing: 16,
                   ),
@@ -60,44 +103,79 @@ class ShopScreen extends StatelessWidget {
 
                     return Container(
                       decoration: BoxDecoration(
-                        border: Border.all(color: Colors.white, width: 2),
-                        color: const Color(0xFF1E1E1E),
+                        color: const Color(0xFF181818),
+                        border: Border.all(
+                          color: const Color(0xFF444444),
+                          width: 1.5,
+                        ),
                       ),
                       child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
-                          Text(item.icon, style: const TextStyle(fontSize: 40)),
-                          const SizedBox(height: 10),
-                          Text(
-                            item.name.toUpperCase(),
-                            textAlign: TextAlign.center,
-                            style: const TextStyle(fontSize: 8),
-                          ),
-                          const SizedBox(height: 10),
-                          Text(
-                            '${item.price} БАЛЛОВ',
-                            style: const TextStyle(
-                              fontSize: 10,
-                              color: Colors.yellowAccent,
-                            ),
-                          ),
-                          const SizedBox(height: 10),
-                          ElevatedButton(
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: canAfford
-                                  ? Colors.greenAccent
-                                  : Colors.grey,
-                              foregroundColor: Colors.black,
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 10,
+                          Expanded(
+                            child: Center(
+                              child: Padding(
+                                padding:
+                                    const EdgeInsets.symmetric(horizontal: 8),
+                                child: Image.asset(
+                                  item.assetPath,
+                                  fit: BoxFit.contain,
+                                ),
                               ),
                             ),
-                            onPressed: canAfford
-                                ? () => state.buyItem(item)
-                                : null,
-                            child: const Text(
-                              'КУПИТЬ',
-                              style: TextStyle(fontSize: 8),
+                          ),
+                          const SizedBox(height: 8),
+                          Padding(
+                            padding:
+                                const EdgeInsets.symmetric(horizontal: 8.0),
+                            child: Text(
+                              item.name.toLowerCase(),
+                              textAlign: TextAlign.center,
+                              style: GoogleFonts.getFont(
+                                'Press Start 2P',
+                                fontSize: 8,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          Padding(
+                            padding: const EdgeInsets.fromLTRB(8, 0, 8, 8),
+                            child: SizedBox(
+                              height: 32,
+                              width: double.infinity,
+                              child: DecoratedBox(
+                                decoration: BoxDecoration(
+                                  gradient: canAfford
+                                      ? const LinearGradient(
+                                          colors: [
+                                            Color(0xFFFF7A00),
+                                            Color(0xFFFF2E93),
+                                          ],
+                                          begin: Alignment.centerLeft,
+                                          end: Alignment.centerRight,
+                                        )
+                                      : const LinearGradient(
+                                          colors: [
+                                            Color(0xFF555555),
+                                            Color(0xFF444444),
+                                          ],
+                                        ),
+                                ),
+                                child: TextButton(
+                                  onPressed: canAfford
+                                      ? () => state.buyItem(item)
+                                      : null,
+                                  child: Text(
+                                    'КУПИТЬ',
+                                    style: GoogleFonts.getFont(
+                                      'Press Start 2P',
+                                      fontSize: 8,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                ),
+                              ),
                             ),
                           ),
                         ],
