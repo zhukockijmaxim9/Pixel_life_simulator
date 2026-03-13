@@ -73,7 +73,7 @@ class _PlanningScreenState extends State<PlanningScreen> {
       body: Consumer<GameState>(
         builder: (context, state, child) {
           switch (_step) {
-            case 0: return _buildGoalStep();
+            case 0: return _buildGoalStep(state);
             case 1: return _buildBudgetStep();
             case 2: return _buildConfirmStep(state);
             default: return const SizedBox();
@@ -83,7 +83,7 @@ class _PlanningScreenState extends State<PlanningScreen> {
     );
   }
 
-  Widget _buildGoalStep() {
+  Widget _buildGoalStep(GameState state) {
     return Column(
       children: [
         if (_tempJob != null) _jobHeader(),
@@ -95,9 +95,9 @@ class _PlanningScreenState extends State<PlanningScreen> {
               children: [
                 Text('НА ЧТО БУДЕШЬ КОПИТЬ?', style: GoogleFonts.getFont('Press Start 2P', fontSize: 10, color: Colors.grey)),
                 const SizedBox(height: 8),
-                Text('Достигни цели и получи бонусные баллы для покупки крутого мерча за достижение!', style: GoogleFonts.getFont('Press Start 2P', fontSize: 8, color: Colors.white38, height: 1.5)),
+                Text('Месяц ${state.currentMonth}. Достигни цели и получи бонусные баллы для мерча!', style: GoogleFonts.getFont('Press Start 2P', fontSize: 8, color: Colors.white38, height: 1.5)),
                 const SizedBox(height: 20),
-                ...GameData.availableGoals.map((goal) => GoalCard(
+                ...GameState.getGoalsForMonth(state.currentMonth).map((goal) => GoalCard(
                   goal: goal,
                   isSelected: _tempGoal == goal,
                   onTap: () => setState(() => _tempGoal = goal),

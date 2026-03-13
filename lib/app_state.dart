@@ -125,7 +125,7 @@ class GameState with ChangeNotifier {
   List<Job> getAvailableJobsForMonth() => _career.getAvailableJobs();
 
   static List<Job> get availableJobs => GameData.allJobs.where((j) => j.tier == 1).toList();
-  static List<GameGoal> get availableGoals => GameData.availableGoals;
+  static List<GameGoal> getGoalsForMonth(int month) => GameData.getGoalsForMonth(month);
   static List<MerchItem> get shopItems => GameData.shopItems;
   static List<GameEvent> get allEvents => GameData.allEvents;
   static List<int> get quizDays => GameData.quizDays;

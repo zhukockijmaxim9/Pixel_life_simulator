@@ -234,6 +234,20 @@ class _GameScreenState extends State<GameScreen> {
                           ),
                           child: Column(
                             children: [
+                              Padding(
+                                padding: const EdgeInsets.only(bottom: 12.0),
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    const Icon(Icons.account_balance_wallet, color: Colors.white, size: 14),
+                                    const SizedBox(width: 6),
+                                    Text(
+                                      'ОБЩИЙ БАЛАНС: ${state.totalMoney.toInt()} ₽',
+                                      style: GoogleFonts.getFont('Press Start 2P', fontSize: 10, color: Colors.greenAccent),
+                                    ),
+                                  ],
+                                ),
+                              ),
                               Row(
                                 mainAxisAlignment:
                                     MainAxisAlignment.spaceBetween,

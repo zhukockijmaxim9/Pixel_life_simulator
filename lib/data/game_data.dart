@@ -23,11 +23,11 @@ class GameData {
     }
   }
 
-  static const double MONTHLY_GOAL = 10000;
+  static const double monthlyGoal = 10000;
 
   static List<Job> get allJobs => JobsData.allJobs;
   static List<Course> get availableCourses => CoursesData.availableCourses;
-  static List<GameGoal> get availableGoals => GoalsData.availableGoals;
+  static List<GameGoal> getGoalsForMonth(int month) => GoalsData.getGoalsForMonth(month);
   static List<MerchItem> get shopItems => MerchData.shopItems;
   
   static List<GameEvent> get allEvents => [
