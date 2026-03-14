@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
+import 'package:video_player/video_player.dart';
+
 import '../app_state.dart';
 import '../models/job.dart';
+import '../ui_theme.dart';
 
 class JobSelectionScreen extends StatefulWidget {
   const JobSelectionScreen({super.key});
@@ -14,9 +17,11 @@ class JobSelectionScreen extends StatefulWidget {
 class _JobSelectionScreenState extends State<JobSelectionScreen> {
   final PageController _pageController = PageController(viewportFraction: 0.85);
   int _currentPage = 0;
+  VideoPlayerController? _courierController;
 
   @override
   void dispose() {
+    _courierController?.dispose();
     _pageController.dispose();
     super.dispose();
   }
@@ -34,7 +39,6 @@ class _JobSelectionScreenState extends State<JobSelectionScreen> {
             child: Column(
               children: [
                 const SizedBox(height: 40),
-                // Title
                 Text(
                   isFirstMonth ? 'ВЫБЕРИ СВОЮ' : 'ВЫБЕРИ',
                   style: GoogleFonts.getFont(
@@ -44,12 +48,19 @@ class _JobSelectionScreenState extends State<JobSelectionScreen> {
                   ),
                 ),
                 const SizedBox(height: 8),
-                Text(
-                  isFirstMonth ? 'ПЕРВУЮ ПРОФЕССИЮ' : 'ПРОФЕССИЮ',
-                  style: GoogleFonts.getFont(
-                    'Press Start 2P',
-                    fontSize: 14,
-                    color: Colors.cyanAccent,
+                ShaderMask(
+                  shaderCallback: (bounds) {
+                    return AppColors.gradient.createShader(
+                      Rect.fromLTWH(0, 0, bounds.width, bounds.height),
+                    );
+                  },
+                  child: Text(
+                    isFirstMonth ? 'ПЕРВУЮ ПРОФЕССИЮ' : 'ПРОФЕССИЮ',
+                    style: GoogleFonts.getFont(
+                      'Press Start 2P',
+                      fontSize: 14,
+                      color: Colors.white,
+                    ),
                   ),
                 ),
                 if (!isFirstMonth)
@@ -75,7 +86,6 @@ class _JobSelectionScreenState extends State<JobSelectionScreen> {
                 ),
                 const SizedBox(height: 24),
 
-                // Swipeable Job Cards
                 Expanded(
                   child: PageView.builder(
                     controller: _pageController,
@@ -95,7 +105,7 @@ class _JobSelectionScreenState extends State<JobSelectionScreen> {
                   ),
                 ),
 
-                // Dot Indicators
+
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: List.generate(
@@ -106,8 +116,11 @@ class _JobSelectionScreenState extends State<JobSelectionScreen> {
                       width: index == _currentPage ? 24 : 8,
                       height: 8,
                       decoration: BoxDecoration(
+                        gradient: index == _currentPage
+                            ? AppColors.gradient
+                            : null,
                         color: index == _currentPage
-                            ? Colors.cyanAccent
+                            ? null
                             : Colors.white24,
                         borderRadius: BorderRadius.circular(4),
                       ),
@@ -116,32 +129,30 @@ class _JobSelectionScreenState extends State<JobSelectionScreen> {
                 ),
                 const SizedBox(height: 24),
 
-                // Select Button
+
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 40),
                   child: SizedBox(
                     width: double.infinity,
-                    child: ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.cyanAccent,
-                        foregroundColor: Colors.black,
-                        shape: const RoundedRectangleBorder(
-                          borderRadius: BorderRadius.zero,
-                        ),
-                        padding: const EdgeInsets.symmetric(vertical: 16),
+                    child: DecoratedBox(
+                      decoration: const BoxDecoration(
+                        gradient: AppColors.gradient,
                       ),
-                      onPressed: () {
-                        Navigator.pushReplacementNamed(
-                          context,
-                          '/planning',
-                          arguments: jobs[_currentPage],
-                        );
-                      },
-                      child: Text(
-                        'ВЫБРАТЬ',
-                        style: GoogleFonts.getFont(
-                          'Press Start 2P',
-                          fontSize: 12,
+                      child: TextButton(
+                        onPressed: () {
+                          Navigator.pushReplacementNamed(
+                            context,
+                            '/planning',
+                            arguments: jobs[_currentPage],
+                          );
+                        },
+                        child: Text(
+                          'ВЫБРАТЬ',
+                          style: GoogleFonts.getFont(
+                            'Press Start 2P',
+                            fontSize: 12,
+                            color: Colors.white,
+                          ),
                         ),
                       ),
                     ),
@@ -156,23 +167,24 @@ class _JobSelectionScreenState extends State<JobSelectionScreen> {
     );
   }
 
+  bool _isCourier(Job job) =>
+      job.title.toLowerCase().contains('курьер') ||
+      job.title.toLowerCase().contains('курьер');
+
   Widget _buildJobCard(Job job, bool isActive) {
     bool isTier2 = job.tier == 2;
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 16),
       decoration: BoxDecoration(
-        color: const Color(0xFF1E1E1E),
+        color: Colors.black,
         border: Border.all(
-          color: isActive
-              ? (isTier2 ? Colors.purpleAccent : Colors.cyanAccent)
-              : Colors.white24,
+          color: isActive ? AppColors.accent2 : Colors.white24,
           width: isActive ? 3 : 1,
         ),
         boxShadow: isActive
             ? [
                 BoxShadow(
-                  color: (isTier2 ? Colors.purpleAccent : Colors.cyanAccent)
-                      .withValues(alpha: 0.15),
+                  color: AppColors.accent2.withValues(alpha: 0.25),
                   blurRadius: 20,
                   spreadRadius: 2,
                 ),
@@ -182,27 +194,39 @@ class _JobSelectionScreenState extends State<JobSelectionScreen> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          // Tier badge
           if (isTier2)
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-              color: Colors.purpleAccent.withValues(alpha: 0.2),
+              decoration: BoxDecoration(
+                gradient: AppColors.gradient,
+              ),
               child: Text(
                 '⭐ УРОВЕНЬ 2',
                 style: GoogleFonts.getFont(
                   'Press Start 2P',
                   fontSize: 7,
-                  color: Colors.purpleAccent,
+                  color: Colors.white,
                 ),
               ),
             ),
           if (isTier2) const SizedBox(height: 12),
 
-          // Job Icon
-          Text(job.icon, style: const TextStyle(fontSize: 80)),
+        
+          SizedBox(
+            width: 180,
+            height: 180,
+            child: _isCourier(job)
+                ? _buildCourierVideo()
+                : const Icon(
+                    Icons.work,
+                    color: Colors.white,
+                    size: 72,
+                  ),
+          ),
+          const SizedBox(height: 24),
           const SizedBox(height: 24),
 
-          // Job Title
+
           Text(
             job.title,
             style: GoogleFonts.getFont(
@@ -214,7 +238,7 @@ class _JobSelectionScreenState extends State<JobSelectionScreen> {
           ),
           const SizedBox(height: 16),
 
-          // Salary
+
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
             decoration: BoxDecoration(
@@ -232,6 +256,68 @@ class _JobSelectionScreenState extends State<JobSelectionScreen> {
               ),
             ),
           ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCourierVideo() {
+    _courierController ??= VideoPlayerController.asset(
+      'assets/characters/courier.mp4',
+    )..setLooping(true)
+      ..setVolume(0)
+      ..initialize().then((_) {
+        if (mounted) {
+          setState(() {});
+          _courierController?.play();
+        }
+      });
+
+    final controller = _courierController;
+    if (controller == null || !controller.value.isInitialized) {
+      return const Center(
+        child: SizedBox(
+          width: 24,
+          height: 24,
+          child: CircularProgressIndicator(strokeWidth: 2),
+        ),
+      );
+    }
+
+    final isPlaying = controller.value.isPlaying;
+
+    return GestureDetector(
+      onTap: () {
+        if (!controller.value.isPlaying) {
+          controller.play();
+        }
+      },
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          FittedBox(
+            fit: BoxFit.cover,
+            child: SizedBox(
+              width: controller.value.size.width,
+              height: controller.value.size.height,
+              child: VideoPlayer(controller),
+            ),
+          ),
+          if (!isPlaying)
+            Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: Colors.black.withOpacity(0.6),
+                shape: BoxShape.circle,
+                border: Border.all(color: Colors.white, width: 2),
+              ),
+              child: const Icon(
+                Icons.play_arrow,
+                color: Colors.white,
+                size: 24,
+              ),
+            ),
         ],
       ),
     );

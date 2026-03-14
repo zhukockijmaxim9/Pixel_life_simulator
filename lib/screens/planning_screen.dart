@@ -8,6 +8,7 @@ import '../data/game_data.dart';
 import '../widgets/goal_card.dart';
 import '../widgets/budget_slider.dart';
 import '../widgets/summary_block.dart';
+import '../ui_theme.dart';
 
 class PlanningScreen extends StatefulWidget {
   const PlanningScreen({super.key});
@@ -93,9 +94,24 @@ class _PlanningScreenState extends State<PlanningScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('НА ЧТО БУДЕШЬ КОПИТЬ?', style: GoogleFonts.getFont('Press Start 2P', fontSize: 10, color: Colors.grey)),
+                Text(
+                  'НА ЧТО БУДЕШЬ КОПИТЬ?',
+                  style: GoogleFonts.getFont(
+                    'Press Start 2P',
+                    fontSize: 10,
+                    color: AppColors.accent5,
+                  ),
+                ),
                 const SizedBox(height: 8),
-                Text('Месяц ${state.currentMonth}. Достигни цели и получи бонусные баллы для мерча!', style: GoogleFonts.getFont('Press Start 2P', fontSize: 8, color: Colors.white38, height: 1.5)),
+                Text(
+                  'Месяц ${state.currentMonth}. Достигни цель и получи бонусные баллы для мерча!',
+                  style: GoogleFonts.getFont(
+                    'Press Start 2P',
+                    fontSize: 8,
+                    color: Colors.white70,
+                    height: 1.5,
+                  ),
+                ),
                 const SizedBox(height: 20),
                 ...GameState.getGoalsForMonth(state.currentMonth).map((goal) => GoalCard(
                   goal: goal,
@@ -120,7 +136,14 @@ class _PlanningScreenState extends State<PlanningScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('РАСПРЕДЕЛИ БЮДЖЕТ', style: GoogleFonts.getFont('Press Start 2P', fontSize: 10, color: Colors.grey)),
+                Text(
+                  'РАСПРЕДЕЛИ БЮДЖЕТ',
+                  style: GoogleFonts.getFont(
+                    'Press Start 2P',
+                    fontSize: 10,
+                    color: AppColors.accent5,
+                  ),
+                ),
                 const SizedBox(height: 8),
                 if (_carryOver > 0) ...[
                   Text('Зарплата: ${_jobSalary.toInt()} ₽ + остаток: ${_carryOver.toInt()} ₽', style: GoogleFonts.getFont('Press Start 2P', fontSize: 9, color: Colors.white38)),
@@ -132,7 +155,14 @@ class _PlanningScreenState extends State<PlanningScreen> {
                 const SizedBox(height: 4),
                 Text('На цель (фикс): ${(_tempGoal?.monthlyContribution ?? 0).toInt()} ₽', style: GoogleFonts.getFont('Press Start 2P', fontSize: 9, color: Colors.yellowAccent)),
                 const SizedBox(height: 4),
-                Text('Остаток к распределению: ${_surplus.toInt()} ₽', style: GoogleFonts.getFont('Press Start 2P', fontSize: 9, color: Colors.cyanAccent)),
+                Text(
+                  'Остаток к распределению: ${_surplus.toInt()} ₽',
+                  style: GoogleFonts.getFont(
+                    'Press Start 2P',
+                    fontSize: 9,
+                    color: AppColors.accent3,
+                  ),
+                ),
                 const SizedBox(height: 24),
                 BudgetSlider(
                   label: 'КОШЕЛЕК',
@@ -185,7 +215,14 @@ class _PlanningScreenState extends State<PlanningScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('СВОДКА', style: GoogleFonts.getFont('Press Start 2P', fontSize: 14, color: Colors.yellowAccent)),
+                Text(
+                  'СВОДКА',
+                  style: GoogleFonts.getFont(
+                    'Press Start 2P',
+                    fontSize: 14,
+                    color: AppColors.accent5,
+                  ),
+                ),
                 const SizedBox(height: 24),
                 SummaryBlock(
                   icon: _tempJob?.icon ?? '💼',
@@ -249,12 +286,21 @@ class _PlanningScreenState extends State<PlanningScreen> {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-      color: Colors.cyanAccent.withValues(alpha: 0.06),
+      decoration: const BoxDecoration(
+        gradient: AppColors.gradient,
+      ),
       child: Row(
         children: [
           Text(_tempJob!.icon, style: const TextStyle(fontSize: 22)),
           const SizedBox(width: 10),
-          Text('${_tempJob!.title}  •  ${_jobSalary.toInt()} ₽/мес', style: GoogleFonts.getFont('Press Start 2P', fontSize: 9, color: Colors.cyanAccent)),
+          Text(
+            '${_tempJob!.title}  •  ${_jobSalary.toInt()} ₽/мес',
+            style: GoogleFonts.getFont(
+              'Press Start 2P',
+              fontSize: 9,
+              color: Colors.white,
+            ),
+          ),
         ],
       ),
     );
@@ -265,15 +311,22 @@ class _PlanningScreenState extends State<PlanningScreen> {
       padding: const EdgeInsets.all(20.0),
       child: SizedBox(
         width: double.infinity,
-        child: ElevatedButton(
-          style: ElevatedButton.styleFrom(
-            backgroundColor: active ? Colors.cyanAccent : Colors.grey,
-            foregroundColor: Colors.black,
-            shape: const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
-            padding: const EdgeInsets.symmetric(vertical: 16),
+        child: DecoratedBox(
+          decoration: BoxDecoration(
+            gradient: active ? AppColors.gradient : null,
+            color: active ? null : Colors.grey,
           ),
-          onPressed: active ? onPressed : null,
-          child: Text(label, style: GoogleFonts.getFont('Press Start 2P', fontSize: 12)),
+          child: TextButton(
+            onPressed: active ? onPressed : null,
+            child: Text(
+              label,
+              style: GoogleFonts.getFont(
+                'Press Start 2P',
+                fontSize: 12,
+                color: Colors.white,
+              ),
+            ),
+          ),
         ),
       ),
     );

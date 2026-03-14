@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import '../app_state.dart';
+import '../ui_theme.dart';
 
 class SummaryScreen extends StatelessWidget {
   const SummaryScreen({super.key});
@@ -18,20 +19,23 @@ class SummaryScreen extends StatelessWidget {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Text(
-                    state.isWin
-                        ? 'ЦЕЛЬ ДОСТИГНУТА! 🎉'
-                        : (state.mood <= 0
-                              ? 'ИГРА ОКОНЧЕНА 💀'
-                              : 'МЕСЯЦ ЗАВЕРШЕН ⚠️'),
-                    style: GoogleFonts.getFont(
-                      'Press Start 2P',
-                      fontSize: 14,
-                      color: state.isWin
-                          ? Colors.greenAccent
+                  ShaderMask(
+                    shaderCallback: (bounds) {
+                      return AppColors.gradient.createShader(
+                        Rect.fromLTWH(0, 0, bounds.width, bounds.height),
+                      );
+                    },
+                    child: Text(
+                      state.isWin
+                          ? 'ЦЕЛЬ ДОСТИГНУТА!'
                           : (state.mood <= 0
-                                ? Colors.redAccent
-                                : Colors.yellowAccent),
+                                ? 'ИГРА ОКОНЧЕНА'
+                                : 'МЕСЯЦ ЗАВЕРШЕН'),
+                      style: GoogleFonts.getFont(
+                        'Press Start 2P',
+                        fontSize: 14,
+                        color: Colors.white,
+                      ),
                     ),
                   ),
                   const SizedBox(height: 8),
@@ -87,14 +91,19 @@ class SummaryScreen extends StatelessWidget {
                     ),
 
                   const SizedBox(height: 20),
-                  Icon(
-                    state.isWin
-                        ? Icons.sentiment_very_satisfied
-                        : Icons.sentiment_satisfied_alt,
-                    size: 80,
-                    color: state.isWin
-                        ? Colors.greenAccent
-                        : Colors.yellowAccent,
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      gradient: AppColors.gradient,
+                    ),
+                    child: Icon(
+                      state.isWin
+                          ? Icons.emoji_events
+                          : (state.mood <= 0 ? Icons.warning : Icons.trending_down),
+                      size: 56,
+                      color: Colors.white,
+                    ),
                   ),
                   const SizedBox(height: 20),
 
@@ -132,16 +141,13 @@ class SummaryScreen extends StatelessWidget {
                   // Next month → re-planning flow
                   SizedBox(
                     width: double.infinity,
-                    child: ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: state.isWin
-                            ? Colors.greenAccent
-                            : Colors.orangeAccent,
-                        foregroundColor: Colors.black,
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                        side: const BorderSide(color: Colors.white, width: 2),
+                    child: DecoratedBox(
+                      decoration: BoxDecoration(
+                        gradient: state.isWin ? AppColors.gradient : AppColors.greyPinkGradient,
+                        border: Border.all(color: Colors.white, width: 2),
                       ),
-                      onPressed: () {
+                      child: TextButton(
+                        onPressed: () {
                         if (state.isWin) {
                           // Success -> Move to next month
                           final currentJob = state.selectedJob;
@@ -170,14 +176,16 @@ class SummaryScreen extends StatelessWidget {
                             (r) => false,
                           );
                         }
-                      },
-                      child: Text(
-                        state.isWin
-                            ? 'СЛЕДУЮЩИЙ МЕСЯЦ ➔'
-                            : 'ПОПРОБОВАТЬ СНОВА ↻',
-                        style: GoogleFonts.getFont(
-                          'Press Start 2P',
-                          fontSize: 11,
+                        },
+                        child: Text(
+                          state.isWin
+                              ? 'СЛЕДУЮЩИЙ МЕСЯЦ ➔'
+                              : 'ПОПРОБОВАТЬ СНОВА ↻',
+                          style: GoogleFonts.getFont(
+                            'Press Start 2P',
+                            fontSize: 11,
+                            color: Colors.white,
+                          ),
                         ),
                       ),
                     ),

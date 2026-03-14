@@ -5,6 +5,7 @@ import '../models/enums.dart';
 import 'event_views/quiz_view.dart';
 import 'event_views/payment_view.dart';
 import 'event_views/voluntary_view.dart';
+import '../ui_theme.dart';
 
 class EventDialog extends StatefulWidget {
   final GameEvent event;
@@ -25,21 +26,40 @@ class _EventDialogState extends State<EventDialog> {
   Widget build(BuildContext context) {
     return AlertDialog(
       backgroundColor: const Color(0xFF1E1E1E),
-      shape: const RoundedRectangleBorder(
-        side: BorderSide(color: Colors.white, width: 4),
-        borderRadius: BorderRadius.zero,
+      shape: RoundedRectangleBorder(
+        side: const BorderSide(color: Colors.white, width: 3),
+        borderRadius: BorderRadius.circular(4),
       ),
       title: Text(
         widget.event.title.toUpperCase(),
-        style: GoogleFonts.getFont('Press Start 2P', fontSize: 16, color: _titleColor),
+        style: GoogleFonts.getFont(
+          'Press Start 2P',
+          fontSize: 14,
+          color: _titleColor,
+        ),
       ),
       content: SingleChildScrollView(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(widget.event.description, style: GoogleFonts.getFont('Press Start 2P', fontSize: 11, height: 1.5)),
-            const SizedBox(height: 20),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(10),
+              decoration: const BoxDecoration(
+                gradient: AppColors.gradient,
+              ),
+              child: Text(
+                widget.event.description,
+                style: GoogleFonts.getFont(
+                  'Press Start 2P',
+                  fontSize: 9,
+                  color: Colors.white,
+                  height: 1.4,
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
             _buildEventSpecificContent(),
           ],
         ),
@@ -103,10 +123,14 @@ class _EventDialogState extends State<EventDialog> {
   Color get _titleColor {
     switch (widget.event.type) {
       case EventType.rent:
-      case EventType.payment: return Colors.redAccent;
-      case EventType.course: return Colors.purpleAccent;
-      case EventType.quiz: return Colors.yellowAccent;
-      default: return Colors.cyanAccent;
+      case EventType.payment:
+        return AppColors.accent4;
+      case EventType.course:
+        return AppColors.accent1;
+      case EventType.quiz:
+        return AppColors.accent5;
+      default:
+        return AppColors.accent2;
     }
   }
 
@@ -137,8 +161,8 @@ class _EventDialogState extends State<EventDialog> {
   Widget _pixelButton(String label, VoidCallback onPressed, {bool isPrimary = false}) {
     return ElevatedButton(
       style: ElevatedButton.styleFrom(
-        backgroundColor: isPrimary ? Colors.cyanAccent : Colors.grey[800],
-        foregroundColor: isPrimary ? Colors.black : Colors.white,
+        backgroundColor: isPrimary ? AppColors.accent3 : Colors.grey[800],
+        foregroundColor: isPrimary ? Colors.white : Colors.white,
       ),
       onPressed: onPressed,
       child: Text(label, style: const TextStyle(fontSize: 10)),
