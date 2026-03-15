@@ -146,11 +146,32 @@ class _PlanningScreenState extends State<PlanningScreen> {
                 ),
                 const SizedBox(height: 8),
                 if (_carryOver > 0) ...[
-                  Text('Зарплата: ${_jobSalary.toInt()} ₽ + остаток: ${_carryOver.toInt()} ₽', style: GoogleFonts.getFont('Press Start 2P', fontSize: 9, color: Colors.white38)),
+                  Text(
+                    'Зарплата: ${_jobSalary.toInt()} ₽ + остаток: ${_carryOver.toInt()} ₽',
+                    style: GoogleFonts.getFont(
+                      'Press Start 2P',
+                      fontSize: 9,
+                      color: Colors.white70,
+                    ),
+                  ),
                   const SizedBox(height: 4),
-                  Text('Всего: ${_totalBudget.toInt()} ₽  |  Аренда: ${_currentRent.toInt()} ₽', style: GoogleFonts.getFont('Press Start 2P', fontSize: 9, color: Colors.greenAccent)),
+                  Text(
+                    'Всего: ${_totalBudget.toInt()} ₽  |  Аренда: ${_currentRent.toInt()} ₽',
+                    style: GoogleFonts.getFont(
+                      'Press Start 2P',
+                      fontSize: 9,
+                      color: AppColors.accent5,
+                    ),
+                  ),
                 ] else ...[
-                  Text('Зарплата: ${_jobSalary.toInt()} ₽  |  Аренда: ${_currentRent.toInt()} ₽', style: GoogleFonts.getFont('Press Start 2P', fontSize: 9, color: Colors.white38)),
+                  Text(
+                    'Зарплата: ${_jobSalary.toInt()} ₽  |  Аренда: ${_currentRent.toInt()} ₽',
+                    style: GoogleFonts.getFont(
+                      'Press Start 2P',
+                      fontSize: 9,
+                      color: Colors.white70,
+                    ),
+                  ),
                 ],
                 const SizedBox(height: 4),
                 Text('На цель (фикс): ${(_tempGoal?.monthlyContribution ?? 0).toInt()} ₽', style: GoogleFonts.getFont('Press Start 2P', fontSize: 9, color: Colors.yellowAccent)),

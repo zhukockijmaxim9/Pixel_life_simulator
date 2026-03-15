@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
@@ -7,6 +9,7 @@ import '../widgets/event_dialog.dart';
 import '../widgets/meal_dialog.dart';
 import '../widgets/transaction_dialog.dart';
 import '../widgets/course_shop_dialog.dart';
+import '../ui_theme.dart';
 
 class GameScreen extends StatefulWidget {
   const GameScreen({super.key});
@@ -15,17 +18,24 @@ class GameScreen extends StatefulWidget {
   State<GameScreen> createState() => _GameScreenState();
 }
 
-class _GameScreenState extends State<GameScreen> {
+class _GameScreenState extends State<GameScreen>
+    with SingleTickerProviderStateMixin {
   bool _isMealShowing = false;
   bool _monthSummaryShown = false;
+  late final AnimationController _bgController;
 
   @override
   void initState() {
     super.initState();
+    _bgController = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 5),
+    )..repeat();
   }
 
   @override
   void dispose() {
+    _bgController.dispose();
     super.dispose();
   }
 
@@ -218,6 +228,16 @@ class _GameScreenState extends State<GameScreen> {
       body: SafeArea(
         child: Stack(
           children: [
+
+            AnimatedBuilder(
+              animation: _bgController,
+              builder: (context, child) {
+                return CustomPaint(
+                  painter: _GameSparklePainter(_bgController.value),
+                  size: MediaQuery.of(context).size,
+                );
+              },
+            ),
             Column(
               children: [
                 Expanded(
@@ -239,11 +259,18 @@ class _GameScreenState extends State<GameScreen> {
                                 child: Row(
                                   mainAxisAlignment: MainAxisAlignment.center,
                                   children: [
-                                    const Icon(Icons.account_balance_wallet, color: Colors.white, size: 14),
+                                    Image.asset(
+                                      'assets/icons/coin.png',
+                                      height: 14,
+                                    ),
                                     const SizedBox(width: 6),
                                     Text(
                                       'ОБЩИЙ БАЛАНС: ${state.totalMoney.toInt()} ₽',
-                                      style: GoogleFonts.getFont('Press Start 2P', fontSize: 10, color: Colors.greenAccent),
+                                      style: GoogleFonts.getFont(
+                                        'Press Start 2P',
+                                        fontSize: 10,
+                                        color: const Color(0xFFFAC541),
+                                      ),
                                     ),
                                   ],
                                 ),
@@ -253,24 +280,24 @@ class _GameScreenState extends State<GameScreen> {
                                     MainAxisAlignment.spaceBetween,
                                 children: [
                                   _accountPanel(
-                                    '👛',
+                                    'assets/icons/wallet.png',
                                     state.walletBalance,
-                                    Colors.yellowAccent,
+                                    const Color(0xFFF28C7C),
                                   ),
                                   _accountPanel(
-                                    '📦',
+                                    'assets/icons/coin.png',
                                     state.deferredFund,
-                                    Colors.orangeAccent,
+                                    const Color(0xFFFAC541),
                                   ),
                                   _accountPanel(
-                                    '📜',
+                                    'assets/icons/necessarily.png',
                                     state.mandatoryBalance,
-                                    Colors.lightBlueAccent,
+                                    const Color(0xFFDD607B),
                                   ),
                                   _accountPanel(
-                                    '🎯',
+                                    'assets/icons/purpose.png',
                                     state.savingsGoal,
-                                    Colors.cyanAccent,
+                                    const Color(0xFFDF3C4E),
                                   ),
                                 ],
                               ),
@@ -302,7 +329,7 @@ class _GameScreenState extends State<GameScreen> {
                                     ),
                                     child: const Icon(
                                       Icons.account_balance_wallet,
-                                      color: Colors.cyanAccent,
+                                      color: Colors.white,
                                       size: 18,
                                     ),
                                   ),
@@ -320,7 +347,7 @@ class _GameScreenState extends State<GameScreen> {
                                       onTap: () => _showCourseShop(context, state),
                                       child: const Icon(
                                         Icons.school,
-                                        color: Colors.greenAccent,
+                                        color: Colors.white,
                                         size: 18,
                                       ),
                                     ),
@@ -331,10 +358,11 @@ class _GameScreenState extends State<GameScreen> {
                         ),
                         const Spacer(),
                         // Character Section
-                        Icon(
-                          Icons.person,
-                          size: 150,
-                          color: _getCharacterColor(state.mood),
+                        Image.asset(
+                          _characterAssetForJob(
+                              state.selectedJob?.title ?? ''),
+                          height: 170,
+                          fit: BoxFit.contain,
                         ),
                         const SizedBox(height: 20),
                         const Text(
@@ -347,7 +375,7 @@ class _GameScreenState extends State<GameScreen> {
                             'ЦЕЛЬ МЕСЯЦА: ${state.selectedGoal?.cost.toInt() ?? 0} ₽',
                             style: const TextStyle(
                               fontSize: 10,
-                              color: Colors.cyanAccent,
+                              color: Color(0xFFDF3C4E),
                             ),
                           ),
                         ),
@@ -375,9 +403,9 @@ class _GameScreenState extends State<GameScreen> {
                                 ),
                                 child: Column(
                                   children: [
-                                    const Text(
-                                      '🍎',
-                                      style: TextStyle(fontSize: 16),
+                                    Image.asset(
+                                      'assets/icons/eat.png',
+                                      height: 20,
                                     ),
                                     const SizedBox(height: 2),
                                     Text(
@@ -405,7 +433,6 @@ class _GameScreenState extends State<GameScreen> {
                   padding: const EdgeInsets.all(20),
                   child: _pixelButton(
                     'РАБОТАТЬ (ПРОМОТКА)',
-                    Colors.cyanAccent,
                     onPressed: () => state.nextTurn(),
                   ),
                 ),
@@ -436,10 +463,10 @@ class _GameScreenState extends State<GameScreen> {
     );
   }
 
-  Widget _accountPanel(String icon, double value, Color color) {
+  Widget _accountPanel(String assetPath, double value, Color color) {
     return Column(
       children: [
-        Text(icon, style: const TextStyle(fontSize: 18)),
+        Image.asset(assetPath, height: 18),
         const SizedBox(height: 4),
         Text(
           value.toStringAsFixed(0),
@@ -454,20 +481,86 @@ class _GameScreenState extends State<GameScreen> {
   }
 
   Widget _pixelButton(
-    String label,
-    Color color, {
+    String label, {
     required VoidCallback onPressed,
   }) {
     return SizedBox(
       width: double.infinity,
-      child: ElevatedButton(
-        style: ElevatedButton.styleFrom(
-          backgroundColor: color,
-          foregroundColor: Colors.black,
+      height: 48,
+      child: DecoratedBox(
+        decoration: const BoxDecoration(
+          gradient: AppColors.gradient,
         ),
-        onPressed: onPressed,
-        child: Text(label),
+        child: TextButton(
+          onPressed: onPressed,
+          child: Text(
+            label,
+            style: GoogleFonts.getFont(
+              'Press Start 2P',
+              fontSize: 11,
+              color: Colors.white,
+            ),
+          ),
+        ),
       ),
     );
+  }
+
+  String _characterAssetForJob(String title) {
+    final t = title.toLowerCase();
+    if (t.contains('доставщик') || t.contains('курьер')) {
+      return 'assets/characters/courier.png';
+    }
+    if (t.contains('кассир')) {
+      return 'assets/characters/cassier.png';
+    }
+    if (t.contains('бариста')) {
+      return 'assets/characters/barista.png';
+    }
+    if (t.contains('smm') || t.contains('smm-менеджер')) {
+      return 'assets/characters/smm.png';
+    }
+    if (t.contains('разработчик')) {
+      return 'assets/characters/developer.png';
+    }
+    if (t.contains('дизайнер')) {
+      return 'assets/characters/designer.png';
+    }
+    return 'assets/characters/courier.png';
+  }
+}
+
+class _GameSparklePainter extends CustomPainter {
+  final double t;
+
+  _GameSparklePainter(this.t);
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final centers = <Offset>[
+      Offset(size.width * 0.15, size.height * 0.15),
+      Offset(size.width * 0.85, size.height * 0.2),
+      Offset(size.width * 0.25, size.height * 0.5),
+      Offset(size.width * 0.75, size.height * 0.7),
+    ];
+
+    for (var i = 0; i < centers.length; i++) {
+      final phase = t + i * 0.3;
+      final alpha = 0.15 +
+          0.25 * (0.5 + 0.5 * math.sin(2 * math.pi * phase));
+      final radius =
+          1.5 + 2.0 * (0.5 + 0.5 * math.sin(2 * math.pi * phase));
+
+      final paint = Paint()
+        ..color = Colors.white.withOpacity(alpha)
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 2);
+
+      canvas.drawCircle(centers[i], radius, paint);
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _GameSparklePainter oldDelegate) {
+    return oldDelegate.t != t;
   }
 }

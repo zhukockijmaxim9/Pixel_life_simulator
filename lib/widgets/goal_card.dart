@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../models/goal.dart';
 
-
+/// Упрощённая карточка цели в общем тёмном стиле игры.
 class GoalCard extends StatelessWidget {
   final GameGoal goal;
   final bool isSelected;
@@ -41,22 +41,10 @@ class GoalCard extends StatelessWidget {
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Container(
+            SizedBox(
               width: 56,
               height: 56,
-              decoration: BoxDecoration(
-                color: const Color(0xFF241424),
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(
-                  color: const Color(0xFF8F1162),
-                  width: 2,
-                ),
-              ),
-              child: const Icon(
-                Icons.image,
-                color: Colors.white,
-                size: 28,
-              ),
+              child: _buildIcon(),
             ),
             const SizedBox(width: 12),
             Expanded(
@@ -124,6 +112,32 @@ class GoalCard extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildIcon() {
+    final title = goal.title.toLowerCase();
+    String? asset;
+
+    if (title.contains('смартфон') || title.contains('телефон')) {
+      asset = 'assets/icons/phone.png';
+    } else if (title.contains('наушник')) {
+      asset = 'assets/icons/headphones.png';
+    } else if (title.contains('планшет')) {
+      asset = 'assets/icons/pad.png';
+    }
+
+    if (asset == null) {
+      return const Icon(
+        Icons.image,
+        color: Colors.white,
+        size: 28,
+      );
+    }
+
+    return Image.asset(
+      asset,
+      fit: BoxFit.contain,
     );
   }
 }

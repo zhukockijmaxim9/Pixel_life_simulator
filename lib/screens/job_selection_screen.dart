@@ -39,6 +39,7 @@ class _JobSelectionScreenState extends State<JobSelectionScreen> {
             child: Column(
               children: [
                 const SizedBox(height: 40),
+                // Title
                 Text(
                   isFirstMonth ? 'ВЫБЕРИ СВОЮ' : 'ВЫБЕРИ',
                   style: GoogleFonts.getFont(
@@ -86,6 +87,7 @@ class _JobSelectionScreenState extends State<JobSelectionScreen> {
                 ),
                 const SizedBox(height: 24),
 
+                // Swipeable Job Cards
                 Expanded(
                   child: PageView.builder(
                     controller: _pageController,
@@ -105,7 +107,7 @@ class _JobSelectionScreenState extends State<JobSelectionScreen> {
                   ),
                 ),
 
-
+                // Dot Indicators
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: List.generate(
@@ -129,7 +131,7 @@ class _JobSelectionScreenState extends State<JobSelectionScreen> {
                 ),
                 const SizedBox(height: 24),
 
-
+                // Select Button
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 40),
                   child: SizedBox(
@@ -194,6 +196,7 @@ class _JobSelectionScreenState extends State<JobSelectionScreen> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
+          // Tier badge
           if (isTier2)
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
@@ -211,7 +214,7 @@ class _JobSelectionScreenState extends State<JobSelectionScreen> {
             ),
           if (isTier2) const SizedBox(height: 12),
 
-        
+          // Плейсхолдер под картинку профессии / видео курьера
           SizedBox(
             width: 180,
             height: 180,
@@ -226,7 +229,7 @@ class _JobSelectionScreenState extends State<JobSelectionScreen> {
           const SizedBox(height: 24),
           const SizedBox(height: 24),
 
-
+          // Job Title
           Text(
             job.title,
             style: GoogleFonts.getFont(
@@ -238,7 +241,7 @@ class _JobSelectionScreenState extends State<JobSelectionScreen> {
           ),
           const SizedBox(height: 16),
 
-
+          // Salary
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
             decoration: BoxDecoration(

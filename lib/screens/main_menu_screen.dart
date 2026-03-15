@@ -40,12 +40,14 @@ class _MainMenuScreenState extends State<MainMenuScreen>
       backgroundColor: const Color(0xFF121212),
       body: Stack(
         children: [
+          // Фон: градиент от серого к розовому
           Container(
             width: double.infinity,
             decoration: const BoxDecoration(
               gradient: AppColors.greyPinkGradient,
             ),
           ),
+          // Слой с "искорками"-звёздами
           AnimatedBuilder(
             animation: _controller,
             builder: (context, child) {
@@ -55,11 +57,13 @@ class _MainMenuScreenState extends State<MainMenuScreen>
               );
             },
           ),
+          // Основной контент по центру
           Center(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
+                // Логотип PIXEL PURSE с белым текстом и мерцающими звёздами рядом
                 AnimatedBuilder(
                   animation: _controller,
                   builder: (context, child) {
@@ -110,6 +114,7 @@ class _MainMenuScreenState extends State<MainMenuScreen>
                   ),
                 ),
                 const SizedBox(height: 80),
+                // Play Buttons
                 if (hasSave) ...[
                   _primaryButton(
                     label: 'ПРОДОЛЖИТЬ ИГРУ',
@@ -196,6 +201,7 @@ class _MainMenuScreenState extends State<MainMenuScreen>
                   ),
                 ],
                 const SizedBox(height: 20),
+                // Shop Button (Secondary)
                 OutlinedButton(
                   style: OutlinedButton.styleFrom(
                     side: const BorderSide(color: Colors.white, width: 2),
