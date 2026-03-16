@@ -466,7 +466,15 @@ class _GameScreenState extends State<GameScreen>
   Widget _accountPanel(String assetPath, double value, Color color) {
     return Column(
       children: [
-        Image.asset(assetPath, height: 18),
+        Image.asset(
+          assetPath,
+          height: 18,
+          errorBuilder: (context, error, stackTrace) => const Icon(
+            Icons.error_outline,
+            size: 14,
+            color: Colors.red,
+          ),
+        ),
         const SizedBox(height: 4),
         Text(
           value.toStringAsFixed(0),

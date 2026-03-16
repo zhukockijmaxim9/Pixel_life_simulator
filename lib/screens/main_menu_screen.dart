@@ -86,7 +86,7 @@ class _MainMenuScreenState extends State<MainMenuScreen>
                           'PIXEL PURSE',
                           style: GoogleFonts.getFont(
                             'Press Start 2P',
-                            fontSize: 32,
+                            fontSize: 20,
                             color: Colors.white,
                             letterSpacing: 2,
                           ),

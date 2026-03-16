@@ -138,6 +138,14 @@ class GoalCard extends StatelessWidget {
     return Image.asset(
       asset,
       fit: BoxFit.contain,
+      errorBuilder: (context, error, stackTrace) {
+        debugPrint('Asset loading error ($asset): $error');
+        return const Icon(
+          Icons.broken_image,
+          color: Colors.redAccent,
+          size: 28,
+        );
+      },
     );
   }
 }
