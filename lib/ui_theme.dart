@@ -10,7 +10,7 @@ class AppColors {
   static const gradient = LinearGradient(
     begin: Alignment.centerLeft,
     end: Alignment.centerRight,
-    stops: [0.0, 0.33, 0.58, 0.78, 1.0],
+    stops: [0.0, 0.25, 0.5, 0.75, 1.0],
     colors: [accent1, accent2, accent3, accent4, accent5],
   );
 

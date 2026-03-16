@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
-import 'package:video_player/video_player.dart';
 
 import '../app_state.dart';
 import '../models/job.dart';
@@ -17,31 +16,11 @@ class JobSelectionScreen extends StatefulWidget {
 class _JobSelectionScreenState extends State<JobSelectionScreen> {
   final PageController _pageController = PageController(viewportFraction: 0.85);
   int _currentPage = 0;
-  final Map<String, VideoPlayerController> _videoControllers = {};
 
   @override
   void dispose() {
-    for (var controller in _videoControllers.values) {
-      controller.dispose();
-    }
     _pageController.dispose();
     super.dispose();
-  }
-
-  VideoPlayerController _getController(String assetPath) {
-    if (!_videoControllers.containsKey(assetPath)) {
-      final controller = VideoPlayerController.asset(assetPath)
-        ..setLooping(true)
-        ..setVolume(0)
-        ..initialize().then((_) {
-          if (mounted) {
-            setState(() {});
-            _videoControllers[assetPath]?.play();
-          }
-        });
-      _videoControllers[assetPath] = controller;
-    }
-    return _videoControllers[assetPath]!;
   }
 
   @override
@@ -150,35 +129,39 @@ class _JobSelectionScreenState extends State<JobSelectionScreen> {
                 const SizedBox(height: 24),
 
                 // Select Button
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 40),
-                  child: SizedBox(
-                    width: double.infinity,
-                    child: DecoratedBox(
-                      decoration: const BoxDecoration(
-                        gradient: AppColors.gradient,
-                      ),
-                      child: TextButton(
-                        onPressed: () {
-                          Navigator.pushReplacementNamed(
-                            context,
-                            '/planning',
-                            arguments: jobs[_currentPage],
-                          );
-                        },
-                        child: Text(
-                          'ВЫБРАТЬ',
-                          style: GoogleFonts.getFont(
-                            'Press Start 2P',
-                            fontSize: 12,
-                            color: Colors.white,
+                SafeArea(
+                  top: false,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 40),
+                    child: SizedBox(
+                      width: double.infinity,
+                      height: 50,
+                      child: DecoratedBox(
+                        decoration: const BoxDecoration(
+                          gradient: AppColors.gradient,
+                        ),
+                        child: TextButton(
+                          onPressed: () {
+                            Navigator.pushReplacementNamed(
+                              context,
+                              '/planning',
+                              arguments: jobs[_currentPage],
+                            );
+                          },
+                          child: Text(
+                            'ВЫБРАТЬ',
+                            style: GoogleFonts.getFont(
+                              'Press Start 2P',
+                              fontSize: 12,
+                              color: Colors.white,
+                            ),
                           ),
                         ),
                       ),
                     ),
                   ),
                 ),
-                const SizedBox(height: 30),
+                const SizedBox(height: 20),
               ],
             ),
           ),
@@ -187,22 +170,8 @@ class _JobSelectionScreenState extends State<JobSelectionScreen> {
     );
   }
 
-  String? _getJobVideoAsset(Job job) {
-    final title = job.title.toLowerCase();
-    if (title.contains('курьер') ||
-        title.contains('доставщик') ||
-        title.contains('пвз')) {
-      return 'assets/characters/courier.mp4';
-    }
-    if (title.contains('кассир') || title.contains('фастфуд')) {
-      return 'assets/characters/cassier.mp4';
-    }
-    return null;
-  }
-
   Widget _buildJobCard(Job job, bool isActive) {
     bool isTier2 = job.tier == 2;
-    final videoAsset = _getJobVideoAsset(job);
 
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 16),
@@ -243,17 +212,16 @@ class _JobSelectionScreenState extends State<JobSelectionScreen> {
             ),
           if (isTier2) const SizedBox(height: 12),
 
-          // Видео профессии или стандартная иконка
+          // Emoji иконка профессии
           SizedBox(
             width: 180,
             height: 180,
-            child: videoAsset != null
-                ? _buildVideoPlayer(videoAsset)
-                : const Icon(
-                    Icons.work,
-                    color: Colors.white,
-                    size: 72,
-                  ),
+            child: Center(
+              child: Text(
+                job.icon,
+                style: const TextStyle(fontSize: 100),
+              ),
+            ),
           ),
           const SizedBox(height: 24),
 
@@ -287,58 +255,6 @@ class _JobSelectionScreenState extends State<JobSelectionScreen> {
               ),
             ),
           ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildVideoPlayer(String assetPath) {
-    final controller = _getController(assetPath);
-
-    if (!controller.value.isInitialized) {
-      return const Center(
-        child: SizedBox(
-          width: 24,
-          height: 24,
-          child: CircularProgressIndicator(strokeWidth: 2),
-        ),
-      );
-    }
-
-    final isPlaying = controller.value.isPlaying;
-
-    return GestureDetector(
-      onTap: () {
-        if (!controller.value.isPlaying) {
-          controller.play();
-        }
-      },
-      child: Stack(
-        alignment: Alignment.center,
-        children: [
-          FittedBox(
-            fit: BoxFit.cover,
-            child: SizedBox(
-              width: controller.value.size.width,
-              height: controller.value.size.height,
-              child: VideoPlayer(controller),
-            ),
-          ),
-          if (!isPlaying)
-            Container(
-              width: 40,
-              height: 40,
-              decoration: BoxDecoration(
-                color: Colors.black.withOpacity(0.6),
-                shape: BoxShape.circle,
-                border: Border.all(color: Colors.white, width: 2),
-              ),
-              child: const Icon(
-                Icons.play_arrow,
-                color: Colors.white,
-                size: 24,
-              ),
-            ),
         ],
       ),
     );

@@ -219,45 +219,50 @@ class _BudgetSettingsScreenState extends State<BudgetSettingsScreen> {
     double totalAllocated = _walletAlloc + _deferredAlloc + _mandatoryAlloc;
     bool isFullyAllocated = (totalAllocated - currentMonthSurplus).abs() < 0.1;
 
-    return Padding(
-      padding: const EdgeInsets.all(20.0),
-      child: SizedBox(
-        width: double.infinity,
-        child: ElevatedButton(
-          style: ElevatedButton.styleFrom(
-            backgroundColor: isFullyAllocated ? Colors.cyanAccent : Colors.grey,
-            foregroundColor: Colors.black,
-          ),
-          onPressed: isFullyAllocated
-              ? () {
-                  state.updateDistribution(
-                    _walletAlloc,
-                    _deferredAlloc,
-                    _mandatoryAlloc,
-                  );
-                  Navigator.pop(context);
-                }
-              : null,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                'ПРИМЕНИТЬ ИЗМЕНЕНИЯ',
-                style: GoogleFonts.getFont('Press Start 2P', fontSize: 10),
-              ),
-              if (!isFullyAllocated)
-                Padding(
-                  padding: const EdgeInsets.only(top: 4.0),
-                  child: Text(
-                    'РАСПРЕДЕЛИТЕ ВЕСЬ БЮДЖЕТ',
-                    style: GoogleFonts.getFont(
-                      'Press Start 2P',
-                      fontSize: 8,
-                      color: Colors.black54,
+    return SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.all(20.0),
+        child: SizedBox(
+          width: double.infinity,
+          height: 50,
+          child: ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: isFullyAllocated ? Colors.cyanAccent : Colors.grey,
+              foregroundColor: Colors.black,
+              side: isFullyAllocated ? const BorderSide(color: Colors.white, width: 2) : null,
+              shape: const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
+            ),
+            onPressed: isFullyAllocated
+                ? () {
+                    state.updateDistribution(
+                      _walletAlloc,
+                      _deferredAlloc,
+                      _mandatoryAlloc,
+                    );
+                    Navigator.pop(context);
+                  }
+                : null,
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  'ПРИМЕНИТЬ ИЗМЕНЕНИЯ',
+                  style: GoogleFonts.getFont('Press Start 2P', fontSize: 10),
+                ),
+                if (!isFullyAllocated)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 4.0),
+                    child: Text(
+                      'РАСПРЕДЕЛИТЕ ВЕСЬ БЮДЖЕТ',
+                      style: GoogleFonts.getFont(
+                        'Press Start 2P',
+                        fontSize: 8,
+                        color: Colors.black54,
+                      ),
                     ),
                   ),
-                ),
-            ],
+              ],
+            ),
           ),
         ),
       ),

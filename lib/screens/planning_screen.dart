@@ -99,7 +99,7 @@ class _PlanningScreenState extends State<PlanningScreen> {
                   style: GoogleFonts.getFont(
                     'Press Start 2P',
                     fontSize: 10,
-                    color: AppColors.accent5,
+                    color: const Color(0xFFFAC541),
                   ),
                 ),
                 const SizedBox(height: 8),
@@ -141,7 +141,7 @@ class _PlanningScreenState extends State<PlanningScreen> {
                   style: GoogleFonts.getFont(
                     'Press Start 2P',
                     fontSize: 10,
-                    color: AppColors.accent5,
+                    color: const Color(0xFFFAC541),
                   ),
                 ),
                 const SizedBox(height: 8),
@@ -160,7 +160,7 @@ class _PlanningScreenState extends State<PlanningScreen> {
                     style: GoogleFonts.getFont(
                       'Press Start 2P',
                       fontSize: 9,
-                      color: AppColors.accent5,
+                      color: const Color(0xFFFAC541),
                     ),
                   ),
                 ] else ...[
@@ -241,7 +241,7 @@ class _PlanningScreenState extends State<PlanningScreen> {
                   style: GoogleFonts.getFont(
                     'Press Start 2P',
                     fontSize: 14,
-                    color: AppColors.accent5,
+                    color: const Color(0xFFFAC541),
                   ),
                 ),
                 const SizedBox(height: 24),
@@ -277,7 +277,7 @@ class _PlanningScreenState extends State<PlanningScreen> {
                       const Divider(color: Colors.white24),
                       _summaryRow('Остаток', '${_surplus.toInt()} ₽', Colors.cyanAccent),
                       const SizedBox(height: 12),
-                      _summaryRow('  👛 Кошелек', '${_walletAlloc.toInt()} ₽', Colors.yellowAccent),
+                      _summaryRow('  👛 Кошелек', '${_walletAlloc.toInt()} ₽', const Color(0xFFFAC541)),
                       _summaryRow('  📦 Отложенные', '${_deferredAlloc.toInt()} ₽', Colors.orangeAccent),
                       _summaryRow('  📜 Обязат.', '${_mandatoryAlloc.toInt()} ₽', Colors.lightBlueAccent),
                       const SizedBox(height: 12),
@@ -328,23 +328,26 @@ class _PlanningScreenState extends State<PlanningScreen> {
   }
 
   Widget _navButton({required String label, required bool active, required VoidCallback onPressed}) {
-    return Padding(
-      padding: const EdgeInsets.all(20.0),
-      child: SizedBox(
-        width: double.infinity,
-        child: DecoratedBox(
-          decoration: BoxDecoration(
-            gradient: active ? AppColors.gradient : null,
-            color: active ? null : Colors.grey,
-          ),
-          child: TextButton(
-            onPressed: active ? onPressed : null,
-            child: Text(
-              label,
-              style: GoogleFonts.getFont(
-                'Press Start 2P',
-                fontSize: 12,
-                color: Colors.white,
+    return SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.all(20.0),
+        child: SizedBox(
+          width: double.infinity,
+          height: 50,
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              gradient: active ? AppColors.gradient : null,
+              color: active ? null : Colors.grey,
+            ),
+            child: TextButton(
+              onPressed: active ? onPressed : null,
+              child: Text(
+                label,
+                style: GoogleFonts.getFont(
+                  'Press Start 2P',
+                  fontSize: 12,
+                  color: Colors.white,
+                ),
               ),
             ),
           ),

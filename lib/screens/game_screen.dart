@@ -155,6 +155,7 @@ class _GameScreenState extends State<GameScreen>
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.cyanAccent,
                     foregroundColor: Colors.black,
+                    side: const BorderSide(color: Colors.white, width: 2),
                     shape: const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
                   ),
                   onPressed: () {
@@ -193,7 +194,7 @@ class _GameScreenState extends State<GameScreen>
           style: GoogleFonts.getFont(
             'Press Start 2P',
             fontSize: 8,
-            color: Colors.orangeAccent,
+            color: const Color(0xFFFAC541),
           ),
         ),
         const SizedBox(width: 8),
@@ -358,11 +359,14 @@ class _GameScreenState extends State<GameScreen>
                         ),
                         const Spacer(),
                         // Character Section
-                        Image.asset(
-                          _characterAssetForJob(
-                              state.selectedJob?.title ?? ''),
+                        SizedBox(
                           height: 170,
-                          fit: BoxFit.contain,
+                          child: Center(
+                            child: Text(
+                              state.selectedJob?.icon ?? '👤',
+                              style: const TextStyle(fontSize: 120),
+                            ),
+                          ),
                         ),
                         const SizedBox(height: 20),
                         const Text(
@@ -375,7 +379,7 @@ class _GameScreenState extends State<GameScreen>
                             'ЦЕЛЬ МЕСЯЦА: ${state.selectedGoal?.cost.toInt() ?? 0} ₽',
                             style: const TextStyle(
                               fontSize: 10,
-                              color: Color(0xFFDF3C4E),
+                              color: Colors.cyanAccent,
                             ),
                           ),
                         ),
@@ -464,17 +468,17 @@ class _GameScreenState extends State<GameScreen>
   }
 
   Widget _accountPanel(String assetPath, double value, Color color) {
+    // Attempt to map asset icon back to emoji for consistency if desired, 
+    // but user only asked for job card icons. Let's stick to emoji for account panels too if it feels better.
+    // Based on previous commit, account panels used text emojis.
+    String icon = '💰';
+    if (assetPath.contains('wallet')) icon = '👛';
+    if (assetPath.contains('necessarily')) icon = '💡';
+    if (assetPath.contains('purpose')) icon = '🎯';
+
     return Column(
       children: [
-        Image.asset(
-          assetPath,
-          height: 18,
-          errorBuilder: (context, error, stackTrace) => const Icon(
-            Icons.error_outline,
-            size: 14,
-            color: Colors.red,
-          ),
-        ),
+        Text(icon, style: const TextStyle(fontSize: 18)),
         const SizedBox(height: 4),
         Text(
           value.toStringAsFixed(0),
@@ -494,7 +498,7 @@ class _GameScreenState extends State<GameScreen>
   }) {
     return SizedBox(
       width: double.infinity,
-      height: 48,
+      height: 50,
       child: DecoratedBox(
         decoration: const BoxDecoration(
           gradient: AppColors.gradient,
@@ -514,28 +518,6 @@ class _GameScreenState extends State<GameScreen>
     );
   }
 
-  String _characterAssetForJob(String title) {
-    final t = title.toLowerCase();
-    if (t.contains('доставщик') || t.contains('курьер')) {
-      return 'assets/characters/courier.png';
-    }
-    if (t.contains('кассир')) {
-      return 'assets/characters/cassier.png';
-    }
-    if (t.contains('бариста')) {
-      return 'assets/characters/barista.png';
-    }
-    if (t.contains('smm') || t.contains('smm-менеджер')) {
-      return 'assets/characters/smm.png';
-    }
-    if (t.contains('разработчик')) {
-      return 'assets/characters/developer.png';
-    }
-    if (t.contains('дизайнер')) {
-      return 'assets/characters/designer.png';
-    }
-    return 'assets/characters/courier.png';
-  }
 }
 
 class _GameSparklePainter extends CustomPainter {

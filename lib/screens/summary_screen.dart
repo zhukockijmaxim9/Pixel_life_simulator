@@ -139,52 +139,55 @@ class SummaryScreen extends StatelessWidget {
                   const Spacer(),
 
                   // Next month → re-planning flow
-                  SizedBox(
-                    width: double.infinity,
-                    child: DecoratedBox(
-                      decoration: BoxDecoration(
-                        gradient: state.isWin ? AppColors.gradient : AppColors.greyPinkGradient,
-                        border: Border.all(color: Colors.white, width: 2),
-                      ),
-                      child: TextButton(
-                        onPressed: () {
-                        if (state.isWin) {
-                          // Success -> Move to next month
-                          final currentJob = state.selectedJob;
-                          final hasNew = state.hasNewJobOpportunities;
-                          
-                          state.startNewMonth();
-                          
-                          if (hasNew) {
-                            Navigator.pushReplacementNamed(
-                              context,
-                              '/job_select',
-                            );
+                  SafeArea(
+                    top: false,
+                    child: SizedBox(
+                      width: double.infinity,
+                      height: 50,
+                      child: DecoratedBox(
+                        decoration: BoxDecoration(
+                          gradient: state.isWin ? AppColors.gradient : AppColors.greyPinkGradient,
+                        ),
+                        child: TextButton(
+                          onPressed: () {
+                          if (state.isWin) {
+                            // Success -> Move to next month
+                            final currentJob = state.selectedJob;
+                            final hasNew = state.hasNewJobOpportunities;
+                            
+                            state.startNewMonth();
+                            
+                            if (hasNew) {
+                              Navigator.pushReplacementNamed(
+                                context,
+                                '/job_select',
+                              );
+                            } else {
+                              // Skip job selection, go straight to planning with current job
+                              Navigator.pushReplacementNamed(
+                                context,
+                                '/planning',
+                                arguments: currentJob,
+                              );
+                            }
                           } else {
-                            // Skip job selection, go straight to planning with current job
-                            Navigator.pushReplacementNamed(
+                            // Failure -> Restart from month 1 (Main Menu)
+                            Navigator.pushNamedAndRemoveUntil(
                               context,
-                              '/planning',
-                              arguments: currentJob,
+                              '/',
+                              (r) => false,
                             );
                           }
-                        } else {
-                          // Failure -> Restart from month 1 (Main Menu)
-                          Navigator.pushNamedAndRemoveUntil(
-                            context,
-                            '/',
-                            (r) => false,
-                          );
-                        }
-                        },
-                        child: Text(
-                          state.isWin
-                              ? 'СЛЕДУЮЩИЙ МЕСЯЦ ➔'
-                              : 'ПОПРОБОВАТЬ СНОВА ↻',
-                          style: GoogleFonts.getFont(
-                            'Press Start 2P',
-                            fontSize: 11,
-                            color: Colors.white,
+                          },
+                          child: Text(
+                            state.isWin
+                                ? 'СЛЕДУЮЩИЙ МЕСЯЦ ➔'
+                                : 'ПОПРОБОВАТЬ СНОВА ↻',
+                            style: GoogleFonts.getFont(
+                              'Press Start 2P',
+                              fontSize: 11,
+                              color: Colors.white,
+                            ),
                           ),
                         ),
                       ),
