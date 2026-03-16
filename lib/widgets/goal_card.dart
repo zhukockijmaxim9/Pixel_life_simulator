@@ -55,7 +55,7 @@ class GoalCard extends StatelessWidget {
                     goal.title,
                     style: const TextStyle(
                       fontFamily: 'Hometown',
-                      fontSize: 20,
+                      fontSize: 22,
                       color: Color(0xFFC0045C),
                     ),
                   ),
@@ -64,7 +64,7 @@ class GoalCard extends StatelessWidget {
                     '${goal.cost.toInt()} ₽',
                     style: const TextStyle(
                       fontFamily: 'Hometown',
-                      fontSize: 18,
+                      fontSize: 20,
                       color: Color(0xFFEB9B2A),
                     ),
                   ),
@@ -73,7 +73,7 @@ class GoalCard extends StatelessWidget {
                     '${goal.monthlyContribution.toInt()} ₽/мес',
                     style: TextStyle(
                       fontFamily: 'Hometown',
-                      fontSize: 14,
+                      fontSize: 16,
                       color: const Color(0xFFC5035C).withValues(alpha: 0.9),
                     ),
                   ),
@@ -116,36 +116,11 @@ class GoalCard extends StatelessWidget {
   }
 
   Widget _buildIcon() {
-    final title = goal.title.toLowerCase();
-    String? asset;
-
-    if (title.contains('смартфон') || title.contains('телефон')) {
-      asset = 'assets/icons/phone.png';
-    } else if (title.contains('наушник')) {
-      asset = 'assets/icons/headphones.png';
-    } else if (title.contains('планшет')) {
-      asset = 'assets/icons/pad.png';
-    }
-
-    if (asset == null) {
-      return const Icon(
-        Icons.image,
-        color: Colors.white,
-        size: 28,
-      );
-    }
-
-    return Image.asset(
-      asset,
-      fit: BoxFit.contain,
-      errorBuilder: (context, error, stackTrace) {
-        debugPrint('Asset loading error ($asset): $error');
-        return const Icon(
-          Icons.broken_image,
-          color: Colors.redAccent,
-          size: 28,
-        );
-      },
+    return Center(
+      child: Text(
+        goal.icon,
+        style: const TextStyle(fontSize: 36),
+      ),
     );
   }
 }

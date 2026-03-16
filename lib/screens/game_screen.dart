@@ -99,7 +99,7 @@ class _GameScreenState extends State<GameScreen>
               '📋 ОБЯЗАТЕЛЬНЫЕ РАСХОДЫ',
               style: GoogleFonts.getFont(
                 'Press Start 2P',
-                fontSize: 11,
+                fontSize: 13,
                 color: Colors.cyanAccent,
               ),
             ),
@@ -132,7 +132,7 @@ class _GameScreenState extends State<GameScreen>
                       'ИТОГО:',
                       style: GoogleFonts.getFont(
                         'Press Start 2P',
-                        fontSize: 10,
+                        fontSize: 11,
                         color: Colors.white,
                       ),
                     ),
@@ -140,7 +140,7 @@ class _GameScreenState extends State<GameScreen>
                       '${(rent + 4000 + 3000).toInt()} ₽',
                       style: GoogleFonts.getFont(
                         'Press Start 2P',
-                        fontSize: 10,
+                        fontSize: 11,
                         color: Colors.redAccent,
                       ),
                     ),
@@ -378,7 +378,7 @@ class _GameScreenState extends State<GameScreen>
                           child: Text(
                             'ЦЕЛЬ МЕСЯЦА: ${state.selectedGoal?.cost.toInt() ?? 0} ₽',
                             style: const TextStyle(
-                              fontSize: 10,
+                              fontSize: 12,
                               color: Colors.cyanAccent,
                             ),
                           ),
@@ -416,7 +416,7 @@ class _GameScreenState extends State<GameScreen>
                                       '${state.daysToHunger} ДН.',
                                       style: GoogleFonts.getFont(
                                         'Press Start 2P',
-                                        fontSize: 8,
+                                        fontSize: 10,
                                         color: state.daysToHunger <= 1
                                             ? Colors.redAccent
                                             : Colors.grey,
@@ -483,7 +483,7 @@ class _GameScreenState extends State<GameScreen>
         Text(
           value.toStringAsFixed(0),
           style: TextStyle(
-            fontSize: 11,
+            fontSize: 13,
             color: color,
             fontWeight: FontWeight.bold,
           ),
@@ -509,7 +509,7 @@ class _GameScreenState extends State<GameScreen>
             label,
             style: GoogleFonts.getFont(
               'Press Start 2P',
-              fontSize: 11,
+              fontSize: 13,
               color: Colors.white,
             ),
           ),

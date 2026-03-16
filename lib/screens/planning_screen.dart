@@ -98,7 +98,7 @@ class _PlanningScreenState extends State<PlanningScreen> {
                   'НА ЧТО БУДЕШЬ КОПИТЬ?',
                   style: GoogleFonts.getFont(
                     'Press Start 2P',
-                    fontSize: 10,
+                    fontSize: 14,
                     color: const Color(0xFFFAC541),
                   ),
                 ),
@@ -140,7 +140,7 @@ class _PlanningScreenState extends State<PlanningScreen> {
                   'РАСПРЕДЕЛИ БЮДЖЕТ',
                   style: GoogleFonts.getFont(
                     'Press Start 2P',
-                    fontSize: 10,
+                    fontSize: 14,
                     color: const Color(0xFFFAC541),
                   ),
                 ),
@@ -159,7 +159,7 @@ class _PlanningScreenState extends State<PlanningScreen> {
                     'Всего: ${_totalBudget.toInt()} ₽  |  Аренда: ${_currentRent.toInt()} ₽',
                     style: GoogleFonts.getFont(
                       'Press Start 2P',
-                      fontSize: 9,
+                      fontSize: 11,
                       color: const Color(0xFFFAC541),
                     ),
                   ),
@@ -174,7 +174,7 @@ class _PlanningScreenState extends State<PlanningScreen> {
                   ),
                 ],
                 const SizedBox(height: 4),
-                Text('На цель (фикс): ${(_tempGoal?.monthlyContribution ?? 0).toInt()} ₽', style: GoogleFonts.getFont('Press Start 2P', fontSize: 9, color: Colors.yellowAccent)),
+                Text('На цель (фикс): ${(_tempGoal?.monthlyContribution ?? 0).toInt()} ₽', style: GoogleFonts.getFont('Press Start 2P', fontSize: 11, color: Colors.yellowAccent)),
                 const SizedBox(height: 4),
                 Text(
                   'Остаток к распределению: ${_surplus.toInt()} ₽',
@@ -240,7 +240,7 @@ class _PlanningScreenState extends State<PlanningScreen> {
                   'СВОДКА',
                   style: GoogleFonts.getFont(
                     'Press Start 2P',
-                    fontSize: 14,
+                    fontSize: 16,
                     color: const Color(0xFFFAC541),
                   ),
                 ),
@@ -345,7 +345,7 @@ class _PlanningScreenState extends State<PlanningScreen> {
                 label,
                 style: GoogleFonts.getFont(
                   'Press Start 2P',
-                  fontSize: 12,
+                  fontSize: 14,
                   color: Colors.white,
                 ),
               ),

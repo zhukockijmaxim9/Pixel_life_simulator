@@ -49,7 +49,7 @@ class _BudgetSettingsScreenState extends State<BudgetSettingsScreen> {
       appBar: AppBar(
         title: Text(
           'ПЛАНИРОВАНИЕ',
-          style: GoogleFonts.getFont('Press Start 2P', fontSize: 12),
+          style: GoogleFonts.getFont('Press Start 2P', fontSize: 13),
         ),
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -72,7 +72,7 @@ class _BudgetSettingsScreenState extends State<BudgetSettingsScreen> {
                     'Остаток к распределению в этом месяце: ${currentMonthSurplus.toInt()} ₽',
                     style: GoogleFonts.getFont(
                       'Press Start 2P',
-                      fontSize: 9,
+                      fontSize: 11,
                       color: Colors.cyanAccent,
                     ),
                   ),
@@ -123,7 +123,7 @@ class _BudgetSettingsScreenState extends State<BudgetSettingsScreen> {
                           'ИТОГО РАСПРЕДЕЛЕНО:',
                           style: GoogleFonts.getFont(
                             'Press Start 2P',
-                            fontSize: 9,
+                            fontSize: 11,
                             color: Colors.grey,
                           ),
                         ),
@@ -131,7 +131,7 @@ class _BudgetSettingsScreenState extends State<BudgetSettingsScreen> {
                           '${(_walletAlloc + _deferredAlloc + _mandatoryAlloc).toInt()} ₽',
                           style: GoogleFonts.getFont(
                             'Press Start 2P',
-                            fontSize: 9,
+                            fontSize: 11,
                             color:
                                 (_walletAlloc +
                                         _deferredAlloc +
@@ -159,7 +159,7 @@ class _BudgetSettingsScreenState extends State<BudgetSettingsScreen> {
       title,
       style: GoogleFonts.getFont(
         'Press Start 2P',
-        fontSize: 12,
+        fontSize: 14,
         color: Colors.grey,
       ),
     );
@@ -181,7 +181,7 @@ class _BudgetSettingsScreenState extends State<BudgetSettingsScreen> {
               label,
               style: GoogleFonts.getFont(
                 'Press Start 2P',
-                fontSize: 9,
+                fontSize: 11,
                 color: Colors.white70,
               ),
             ),
@@ -189,7 +189,7 @@ class _BudgetSettingsScreenState extends State<BudgetSettingsScreen> {
               '${value.toInt()} ₽',
               style: GoogleFonts.getFont(
                 'Press Start 2P',
-                fontSize: 9,
+                fontSize: 11,
                 color: Colors.cyanAccent,
               ),
             ),
@@ -247,7 +247,7 @@ class _BudgetSettingsScreenState extends State<BudgetSettingsScreen> {
               children: [
                 Text(
                   'ПРИМЕНИТЬ ИЗМЕНЕНИЯ',
-                  style: GoogleFonts.getFont('Press Start 2P', fontSize: 10),
+                  style: GoogleFonts.getFont('Press Start 2P', fontSize: 13),
                 ),
                 if (!isFullyAllocated)
                   Padding(

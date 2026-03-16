@@ -36,7 +36,7 @@ class SummaryBlock extends StatelessWidget {
                   title,
                   style: GoogleFonts.getFont(
                     'Press Start 2P',
-                    fontSize: 7,
+                    fontSize: 10,
                     color: Colors.grey,
                   ),
                 ),
@@ -45,7 +45,7 @@ class SummaryBlock extends StatelessWidget {
                   value,
                   style: GoogleFonts.getFont(
                     'Press Start 2P',
-                    fontSize: 10,
+                    fontSize: 13,
                     color: Colors.white,
                   ),
                 ),
@@ -54,7 +54,7 @@ class SummaryBlock extends StatelessWidget {
                   sub,
                   style: GoogleFonts.getFont(
                     'Press Start 2P',
-                    fontSize: 7,
+                    fontSize: 10,
                     color: Colors.cyanAccent,
                   ),
                 ),

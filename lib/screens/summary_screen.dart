@@ -33,7 +33,7 @@ class SummaryScreen extends StatelessWidget {
                                 : 'МЕСЯЦ ЗАВЕРШЕН'),
                       style: GoogleFonts.getFont(
                         'Press Start 2P',
-                        fontSize: 14,
+                        fontSize: 18,
                         color: Colors.white,
                       ),
                     ),
@@ -43,7 +43,7 @@ class SummaryScreen extends StatelessWidget {
                     'Месяц ${state.currentMonth}',
                     style: GoogleFonts.getFont(
                       'Press Start 2P',
-                      fontSize: 12,
+                      fontSize: 14,
                       color: Colors.grey,
                     ),
                   ),
@@ -83,7 +83,7 @@ class SummaryScreen extends StatelessWidget {
                           textAlign: TextAlign.center,
                           style: GoogleFonts.getFont(
                             'Press Start 2P',
-                            fontSize: 9,
+                            fontSize: 11,
                             color: Colors.greenAccent,
                           ),
                         ),
@@ -116,7 +116,7 @@ class SummaryScreen extends StatelessWidget {
                     textAlign: TextAlign.center,
                     style: GoogleFonts.getFont(
                       'Press Start 2P',
-                      fontSize: 9,
+                      fontSize: 11,
                       color: Colors.white.withValues(alpha: 0.8),
                       height: 1.5,
                     ),
@@ -185,7 +185,7 @@ class SummaryScreen extends StatelessWidget {
                                 : 'ПОПРОБОВАТЬ СНОВА ↻',
                             style: GoogleFonts.getFont(
                               'Press Start 2P',
-                              fontSize: 11,
+                              fontSize: 13,
                               color: Colors.white,
                             ),
                           ),
@@ -216,14 +216,14 @@ class SummaryScreen extends StatelessWidget {
 
   Widget _buildStatRow(String label, String value) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 6),
+      padding: const EdgeInsets.symmetric(vertical: 8),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(label, style: const TextStyle(fontSize: 12, color: Colors.grey)),
+          Text(label, style: const TextStyle(fontSize: 14, color: Colors.grey)),
           Text(
             value,
-            style: const TextStyle(fontSize: 14, color: Colors.white),
+            style: const TextStyle(fontSize: 16, color: Colors.white),
           ),
         ],
       ),

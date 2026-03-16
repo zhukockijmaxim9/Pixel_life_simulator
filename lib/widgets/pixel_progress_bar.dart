@@ -17,7 +17,7 @@ class PixelProgressBar extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: const TextStyle(fontSize: 10, color: Colors.white)),
+        Text(label, style: const TextStyle(fontSize: 12, color: Colors.white)),
         const SizedBox(height: 8),
         Container(
           height: 24,

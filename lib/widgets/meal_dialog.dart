@@ -24,7 +24,7 @@ class MealDialog extends StatelessWidget {
         'ПОРА ПОДКРЕПИТЬСЯ!',
         style: GoogleFonts.getFont(
           'Press Start 2P',
-          fontSize: 14,
+          fontSize: 18,
           color: Colors.yellowAccent,
         ),
       ),
@@ -98,7 +98,7 @@ class MealDialog extends StatelessWidget {
                         title,
                         style: GoogleFonts.getFont(
                           'Press Start 2P',
-                          fontSize: 10,
+                          fontSize: 13,
                           color: color,
                         ),
                       ),
@@ -117,7 +117,7 @@ class MealDialog extends StatelessWidget {
                   cost,
                   style: GoogleFonts.getFont(
                     'Press Start 2P',
-                    fontSize: 8,
+                    fontSize: 11,
                     color: color,
                   ),
                 ),

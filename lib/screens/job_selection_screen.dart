@@ -41,7 +41,7 @@ class _JobSelectionScreenState extends State<JobSelectionScreen> {
                   isFirstMonth ? 'ВЫБЕРИ СВОЮ' : 'ВЫБЕРИ',
                   style: GoogleFonts.getFont(
                     'Press Start 2P',
-                    fontSize: 16,
+                    fontSize: 20,
                     color: Colors.white,
                   ),
                 ),
@@ -56,7 +56,7 @@ class _JobSelectionScreenState extends State<JobSelectionScreen> {
                     isFirstMonth ? 'ПЕРВУЮ ПРОФЕССИЮ' : 'ПРОФЕССИЮ',
                     style: GoogleFonts.getFont(
                       'Press Start 2P',
-                      fontSize: 14,
+                      fontSize: 18,
                       color: Colors.white,
                     ),
                   ),
@@ -152,7 +152,7 @@ class _JobSelectionScreenState extends State<JobSelectionScreen> {
                             'ВЫБРАТЬ',
                             style: GoogleFonts.getFont(
                               'Press Start 2P',
-                              fontSize: 12,
+                              fontSize: 14,
                               color: Colors.white,
                             ),
                           ),
@@ -230,7 +230,7 @@ class _JobSelectionScreenState extends State<JobSelectionScreen> {
             job.title,
             style: GoogleFonts.getFont(
               'Press Start 2P',
-              fontSize: 14,
+              fontSize: 18,
               color: Colors.white,
             ),
             textAlign: TextAlign.center,
@@ -250,7 +250,7 @@ class _JobSelectionScreenState extends State<JobSelectionScreen> {
               '${job.salary.toStringAsFixed(0)} ₽/мес',
               style: GoogleFonts.getFont(
                 'Press Start 2P',
-                fontSize: 12,
+                fontSize: 14,
                 color: Colors.cyanAccent,
               ),
             ),
