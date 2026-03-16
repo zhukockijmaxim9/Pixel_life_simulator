@@ -369,9 +369,9 @@ class _GameScreenState extends State<GameScreen>
                           ),
                         ),
                         const SizedBox(height: 20),
-                        const Text(
-                          'СУДЬБА В ПИКСЕЛЯХ',
-                          style: TextStyle(fontSize: 16, color: Colors.white),
+                        Text(
+                          state.selectedJob?.title ?? 'БЕЗРАБОТНЫЙ',
+                          style: const TextStyle(fontSize: 16, color: Colors.white),
                         ),
                         Padding(
                           padding: const EdgeInsets.only(top: 10),

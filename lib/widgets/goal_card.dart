@@ -54,7 +54,6 @@ class GoalCard extends StatelessWidget {
                   Text(
                     goal.title,
                     style: const TextStyle(
-                      fontFamily: 'Hometown',
                       fontSize: 22,
                       color: Color(0xFFC0045C),
                     ),
@@ -63,7 +62,6 @@ class GoalCard extends StatelessWidget {
                   Text(
                     '${goal.cost.toInt()} ₽',
                     style: const TextStyle(
-                      fontFamily: 'Hometown',
                       fontSize: 20,
                       color: Color(0xFFEB9B2A),
                     ),
@@ -72,7 +70,6 @@ class GoalCard extends StatelessWidget {
                   Text(
                     '${goal.monthlyContribution.toInt()} ₽/мес',
                     style: TextStyle(
-                      fontFamily: 'Hometown',
                       fontSize: 16,
                       color: const Color(0xFFC5035C).withValues(alpha: 0.9),
                     ),
@@ -87,7 +84,6 @@ class GoalCard extends StatelessWidget {
                 Text(
                   '+${goal.pointsReward}',
                   style: const TextStyle(
-                    fontFamily: 'Hometown',
                     fontSize: 14,
                     color: Color(0xFFC5035C),
                   ),

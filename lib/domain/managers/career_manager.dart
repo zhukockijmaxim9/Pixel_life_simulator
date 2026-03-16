@@ -66,7 +66,10 @@ class CareerManager {
 
     available.removeWhere((j) => jobsToHide.contains(j.title));
 
-    return available.toSet().toList();
+    final sortedAvailable = available.toSet().toList();
+    sortedAvailable.sort((a, b) => b.tier.compareTo(a.tier));
+
+    return sortedAvailable;
   }
 
   bool hasNewOpportunities() {

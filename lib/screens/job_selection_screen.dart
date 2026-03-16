@@ -171,7 +171,23 @@ class _JobSelectionScreenState extends State<JobSelectionScreen> {
   }
 
   Widget _buildJobCard(Job job, bool isActive) {
-    bool isTier2 = job.tier == 2;
+    // Determine badge colors based on job tier
+    Gradient? tierGradient;
+    Color? tierColor;
+    String tierText = '⭐ УРОВЕНЬ ${job.tier}';
+
+    switch (job.tier) {
+      case 1:
+        tierGradient = AppColors.greyPinkGradient;
+        break;
+      case 2:
+        tierGradient = AppColors.gradient;
+        break;
+      case 3:
+      default:
+        tierColor = const Color(0xFFFFD700); // Gold for tier 3+
+        break;
+    }
 
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 16),
@@ -194,23 +210,23 @@ class _JobSelectionScreenState extends State<JobSelectionScreen> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          // Tier badge
-          if (isTier2)
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-              decoration: BoxDecoration(
-                gradient: AppColors.gradient,
-              ),
-              child: Text(
-                '⭐ УРОВЕНЬ 2',
-                style: GoogleFonts.getFont(
-                  'Press Start 2P',
-                  fontSize: 7,
-                  color: Colors.white,
-                ),
+          // Tier badge for ALL tiers
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+            decoration: BoxDecoration(
+              gradient: tierGradient,
+              color: tierColor,
+            ),
+            child: Text(
+              tierText,
+              style: GoogleFonts.getFont(
+                'Press Start 2P',
+                fontSize: 7,
+                color: tierColor != null ? Colors.black : Colors.white,
               ),
             ),
-          if (isTier2) const SizedBox(height: 12),
+          ),
+          const SizedBox(height: 12),
 
           // Emoji иконка профессии
           SizedBox(
