@@ -67,6 +67,7 @@ flutter test
 - **Архитектура и состояние**: `docs/architecture.md`
 - **Правила игры и механики**: `docs/gameplay.md`
 - **Ассеты и контент**: `docs/assets.md`
+- **Разработка (запуск/сборки/FAQ)**: `docs/development.md`
 
 ## Вклад в проект
 
