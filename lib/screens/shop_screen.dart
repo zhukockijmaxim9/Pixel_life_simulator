@@ -23,7 +23,7 @@ class ShopScreen extends StatelessWidget {
           ),
         ),
         title: const _GradientText(
-          'NEOFLEX MERCH SHOP',
+          'MERCH SHOP',
           fontSize: 12,
           textAlign: TextAlign.center,
         ),
@@ -54,7 +54,7 @@ class ShopScreen extends StatelessWidget {
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      'официальный мерч neoflex',
+                      'официальный мерч',
                       style: GoogleFonts.getFont(
                         'Press Start 2P',
                         fontSize: 8,

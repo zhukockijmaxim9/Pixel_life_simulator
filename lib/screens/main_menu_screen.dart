@@ -225,14 +225,7 @@ class _MainMenuScreenState extends State<MainMenuScreen>
                     ),
                   ),
                 ),
-                const SizedBox(height: 60),
-                const Text(
-                  'Powered by Neoflex',
-                  style: TextStyle(
-                    fontSize: 10,
-                    color: Color(0xFFC0045C),
-                  ),
-                ),
+
               ],
             ),
           ),
