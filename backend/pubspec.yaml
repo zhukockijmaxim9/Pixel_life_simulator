@@ -1,0 +1,7 @@
+name: pixel_life_api
+description: Simple Dart backend for Pixel Life Simulator
+version: 1.0.0
+publish_to: none
+
+environment:
+  sdk: ^3.11.1

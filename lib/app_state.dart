@@ -1,7 +1,5 @@
 import 'dart:math';
-import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 import 'models/enums.dart';
 import 'models/job.dart';
@@ -12,10 +10,12 @@ import 'models/course.dart';
 import 'data/game_data.dart';
 import 'domain/managers/career_manager.dart';
 import 'domain/managers/finance_manager.dart';
+import 'services/game_state_api.dart';
 
 class GameState with ChangeNotifier {
   final CareerManager _career = CareerManager();
   final FinanceManager _finance = FinanceManager();
+  final GameStateApi _api = GameStateApi();
 
   // Dynamic salary based on selected job
   double get salary => _career.selectedJob?.salary ?? 30000;
@@ -559,9 +559,7 @@ class GameState with ChangeNotifier {
 
   Future<void> saveToDisk() async {
     try {
-      final prefs = await SharedPreferences.getInstance();
-      final data = jsonEncode(toJson());
-      await prefs.setString('game_state', data);
+      await _api.saveGameState(toJson());
     } catch (e) {
       debugPrint('Error saving game state: $e');
     }
@@ -569,44 +567,9 @@ class GameState with ChangeNotifier {
 
   Future<void> loadFromDisk() async {
     try {
-      final prefs = await SharedPreferences.getInstance();
-      final data = prefs.getString('game_state');
-      if (data != null) {
-        final Map<String, dynamic> json = jsonDecode(data);
-        _mood = json['mood']?.toDouble() ?? 60;
-        _currentDay = json['currentDay'] ?? 1;
-        _currentMonth = json['currentMonth'] ?? 1;
-        _gamePoints = json['gamePoints'] ?? 0;
-        _daysSinceLastMeal = json['daysSinceLastMeal'] ?? 0;
-        _mealThreshold = json['mealThreshold'] ?? 2;
-        _needsMeal = json['needsMeal'] ?? false;
-        _quizzesShownThisMonth = json['quizzesShownThisMonth'] ?? 0;
-        _pendingQuizIds = List<String>.from(json['pendingQuizIds'] ?? []);
-        _currentEvent = json['currentEvent'] != null ? GameEvent.fromJson(json['currentEvent']) : null;
-        _isGameOver = json['isGameOver'] ?? false;
-        _isWin = json['isWin'] ?? false;
-        _isPlanningPhase = json['isPlanningPhase'] ?? false;
-        _inventory.clear();
-        if (json['inventory'] != null) {
-          _inventory.addAll((json['inventory'] as List).map((i) => MerchItem.fromJson(i)));
-        }
-        _pendingTransaction = json['pendingTransaction'] != null ? PendingTransaction.fromJson(json['pendingTransaction']) : null;
-        _eventHistory.clear();
-        if (json['eventHistory'] != null) {
-          _eventHistory.addAll(Map<String, int>.from(json['eventHistory']));
-        }
-        _overtimeCount = json['overtimeCount'] ?? 0;
-        _pendingPayments.clear();
-        if (json['pendingPayments'] != null) {
-          _pendingPayments.addAll((json['pendingPayments'] as List).map((p) => PendingPayment.fromJson(p)));
-        }
-        _currentMonthSurplus = json['currentMonthSurplus']?.toDouble() ?? 0;
-        _currentMonthGoalContrib = json['currentMonthGoalContrib']?.toDouble() ?? 0;
-        _carryOver = json['carryOver']?.toDouble() ?? 0;
-        _showMonthSummary = json['showMonthSummary'] ?? false;
-        _selectedGoal = json['selectedGoal'] != null ? GameGoal.fromJson(json['selectedGoal']) : null;
-        _career.fromJson(json['career'] ?? {});
-        _finance.fromJson(json['finance'] ?? {});
+      final json = await _api.fetchGameState();
+      if (json != null) {
+        _applyState(json);
         notifyListeners();
       }
     } catch (e) {
@@ -615,8 +578,11 @@ class GameState with ChangeNotifier {
   }
 
   Future<void> clearSave() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.remove('game_state');
+    try {
+      await _api.clearGameState();
+    } catch (e) {
+      debugPrint('Error clearing game state: $e');
+    }
   }
 
   Future<void> clearSaveAndReset() async {
@@ -648,5 +614,66 @@ class GameState with ChangeNotifier {
     _showMonthSummary = false;
     
     notifyListeners();
+    await saveToDisk();
+  }
+
+  void _applyState(Map<String, dynamic> json) {
+    _mood = json['mood']?.toDouble() ?? 60;
+    _currentDay = json['currentDay'] ?? 1;
+    _currentMonth = json['currentMonth'] ?? 1;
+    _gamePoints = json['gamePoints'] ?? 0;
+    _daysSinceLastMeal = json['daysSinceLastMeal'] ?? 0;
+    _mealThreshold = json['mealThreshold'] ?? 2;
+    _needsMeal = json['needsMeal'] ?? false;
+    _quizzesShownThisMonth = json['quizzesShownThisMonth'] ?? 0;
+    _pendingQuizIds = List<String>.from(json['pendingQuizIds'] ?? []);
+    _currentEvent = json['currentEvent'] != null
+        ? GameEvent.fromJson(Map<String, dynamic>.from(json['currentEvent']))
+        : null;
+    _isGameOver = json['isGameOver'] ?? false;
+    _isWin = json['isWin'] ?? false;
+    _isPlanningPhase = json['isPlanningPhase'] ?? false;
+
+    _inventory.clear();
+    if (json['inventory'] != null) {
+      _inventory.addAll(
+        (json['inventory'] as List).map(
+          (item) => MerchItem.fromJson(Map<String, dynamic>.from(item)),
+        ),
+      );
+    }
+
+    _pendingTransaction = json['pendingTransaction'] != null
+        ? PendingTransaction.fromJson(
+            Map<String, dynamic>.from(json['pendingTransaction']),
+          )
+        : null;
+
+    _eventHistory
+      ..clear()
+      ..addAll(Map<String, int>.from(json['eventHistory'] ?? {}));
+
+    _overtimeCount = json['overtimeCount'] ?? 0;
+
+    _pendingPayments.clear();
+    if (json['pendingPayments'] != null) {
+      _pendingPayments.addAll(
+        (json['pendingPayments'] as List).map(
+          (payment) => PendingPayment.fromJson(
+            Map<String, dynamic>.from(payment),
+          ),
+        ),
+      );
+    }
+
+    _currentMonthSurplus = json['currentMonthSurplus']?.toDouble() ?? 0;
+    _currentMonthGoalContrib = json['currentMonthGoalContrib']?.toDouble() ?? 0;
+    _carryOver = json['carryOver']?.toDouble() ?? 0;
+    _showMonthSummary = json['showMonthSummary'] ?? false;
+    _selectedGoal = json['selectedGoal'] != null
+        ? GameGoal.fromJson(Map<String, dynamic>.from(json['selectedGoal']))
+        : null;
+    _career.fromJson(Map<String, dynamic>.from(json['career'] ?? {}));
+    _finance.fromJson(Map<String, dynamic>.from(json['finance'] ?? {}));
   }
 }
